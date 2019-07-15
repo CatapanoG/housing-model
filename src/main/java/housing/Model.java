@@ -64,6 +64,9 @@ public class Model {
     private static String               configFileName;
     private static String               outputFolder;
 
+    // +++
+    private static double[]				HouseHPI;
+
     //------------------------//
     //----- Constructors -----//
     //------------------------//
@@ -94,6 +97,9 @@ public class Model {
         rentalMarketStats = new collectors.RentalMarketStats(housingMarketStats, houseRentalMarket);
 
         nSimulation = 0;
+
+        // +++
+        HouseHPI = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
     }
 
     //-------------------//
@@ -102,11 +108,21 @@ public class Model {
 
 	public static void main(String[] args) {
 
+		// the model has about 70 parameters
+
 	    // Handle input arguments from command line
-        handleInputArguments(args);
+        // handleInputArguments(args);
+		String[] args2 = {"args"};
+		handleInputArguments(args2);
 
         // Create an instance of Model in order to initialise it (reading config file)
         new Model(configFileName, outputFolder);
+
+        // Try to modify a config parameter
+        // ****************************************** //
+        System.out.println("PARAM: " + config.BIDUP);
+        config.BIDUP = 1.6666;
+        System.out.println("PARAM: " + config.BIDUP);
 
         // Start data recorders for output
         setupStatics();
@@ -124,16 +140,19 @@ public class Model {
             init();
 
             // For each simulation, run config.N_STEPS time steps
-			for (t = 0; t <= config.N_STEPS; t += 1) {
+			for (t = 0; t < config.N_STEPS; t += 1) {
 
                 // Steps model and stores sale and rental markets bid and offer prices, and their averages, into their
                 // respective variables
                 modelStep();
 
-//                if (t >= config.TIME_TO_START_RECORDING) {
+                if (t >= config.TIME_TO_START_RECORDING) {
                     // Write results of this time step and run to both multi- and single-run files
-                    recorder.writeTimeStampResults(config.recordCoreIndicators, t);
-//                }
+                    // ---
+                	//recorder.writeTimeStampResults(config.recordCoreIndicators, t);
+                    // +++
+                    HouseHPI[t - config.TIME_TO_START_RECORDING] = Model.housingMarketStats.getHPI();
+                }
 
                 // Print time information to screen
                 if (t % 100 == 0) {
@@ -142,17 +161,24 @@ public class Model {
             }
 
 			// Finish each simulation within the recorders (closing single-run files, changing line in multi-run files)
-            recorder.finishRun(config.recordCoreIndicators);
+            // ---
+			//recorder.finishRun(config.recordCoreIndicators);
             // TODO: Check what this is actually doing and if it is necessary
-            if(config.recordMicroData) transactionRecorder.endOfSim();
+            // ---
+			///if(config.recordMicroData) transactionRecorder.endOfSim();
 		}
 
         // After the last simulation, clean up
-        recorder.finish(config.recordCoreIndicators);
-        if(config.recordMicroData) transactionRecorder.finish();
+        // ---
+		//recorder.finish(config.recordCoreIndicators);
+        //if(config.recordMicroData) transactionRecorder.finish();
 
-        //Stop the program when finished
-		System.exit(0);
+		// +++
+		// TODO: either add a .csv output or a console output for HouseHPI[]
+
+        // Stop the program when finished
+		// ---
+		// System.exit(0);
 	}
 
 	private static void setupStatics() {
