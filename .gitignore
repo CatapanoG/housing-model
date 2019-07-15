@@ -18,3 +18,7 @@
 
 # ignore python pyc files
 *.pyc
+
+# ignore the python virtualenv contents (it can be recreated via
+# recreate-virtualenv.sh
+/venv

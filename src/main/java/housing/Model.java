@@ -100,6 +100,21 @@ public class Model {
     //----- Methods -----//
     //-------------------//
 
+
+    // HACKS for runing in py4j - START
+    public String greetMe() {
+        return "ciao bello";
+    }
+
+    public void printGreet() {
+        System.out.println("ciau bellu");
+    }
+
+    public static void exec() {
+        main(new String[]{});
+    }
+    // HACKS for runing in py4j - END
+
 	public static void main(String[] args) {
 
 	    // Handle input arguments from command line

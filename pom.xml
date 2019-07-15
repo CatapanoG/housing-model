@@ -32,6 +32,11 @@
             <artifactId>commons-csv</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>bartdag</groupId>
+            <artifactId>py4j</artifactId>
+            <version>0.18.1</version>
+        </dependency>
     </dependencies>
 
     <build>
