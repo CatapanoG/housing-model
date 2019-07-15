@@ -106,8 +106,7 @@ public class Model {
     //----- Methods -----//
     //-------------------//
 
-    public static void main(String[] args) {
-
+    public static double[] exec(Double BidUp) {
         // the model has about 70 parameters
 
         // Handle input arguments from command line
@@ -118,11 +117,15 @@ public class Model {
         // Create an instance of Model in order to initialise it (reading config file)
         new Model(configFileName, outputFolder);
 
-        // Try to modify a config parameter
-        // ****************************************** //
-        System.out.println("PARAM: " + config.BIDUP);
-        config.BIDUP = 1.6666;
-        System.out.println("PARAM: " + config.BIDUP);
+        /*
+         * modify config parameters, if we received any - START
+         * this has to be done for each parameter of the exec() function
+         */
+
+        // override default configuration parameter only if BidUp was not null
+        if (BidUp != null) config.BIDUP = BidUp;
+
+        // modify config parameters, if we received any - END
 
         // Start data recorders for output
         setupStatics();
@@ -168,6 +171,8 @@ public class Model {
             ///if(config.recordMicroData) transactionRecorder.endOfSim();
         }
 
+        return HouseHPI;
+
         // After the last simulation, clean up
         // ---
         //recorder.finish(config.recordCoreIndicators);
@@ -179,6 +184,17 @@ public class Model {
         // Stop the program when finished
         // ---
         // System.exit(0);
+    }
+
+    public static void main(String[] args) {
+        /* Let's call exec() passing only null parameters.
+         *
+         * When exec() receives a null parameter, it uses the default one from
+         * the config file, thus executing main() becomes equivalent to running
+         * with no parameter overriding.
+         */
+        System.out.println("INFO: running the simulation with default parameters");
+        exec(null);
     }
 
     private static void setupStatics() {
