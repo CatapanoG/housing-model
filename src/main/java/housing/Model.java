@@ -106,14 +106,14 @@ public class Model {
     //----- Methods -----//
     //-------------------//
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		// the model has about 70 parameters
+        // the model has about 70 parameters
 
-	    // Handle input arguments from command line
+        // Handle input arguments from command line
         // handleInputArguments(args);
-		String[] args2 = {"args"};
-		handleInputArguments(args2);
+        String[] args2 = {"args"};
+        handleInputArguments(args2);
 
         // Create an instance of Model in order to initialise it (reading config file)
         new Model(configFileName, outputFolder);
@@ -131,16 +131,16 @@ public class Model {
         recorder.openMultiRunFiles(config.recordCoreIndicators);
 
         // Perform config.N_SIMS simulations
-		for (nSimulation = 1; nSimulation <= config.N_SIMS; nSimulation += 1) {
+        for (nSimulation = 1; nSimulation <= config.N_SIMS; nSimulation += 1) {
 
             // For each simulation, open files for writing single-run results
             recorder.openSingleRunFiles(nSimulation);
 
-		    // For each simulation, initialise both houseSaleMarket and houseRentalMarket variables (including HPI)
+            // For each simulation, initialise both houseSaleMarket and houseRentalMarket variables (including HPI)
             init();
 
             // For each simulation, run config.N_STEPS time steps
-			for (t = 0; t < config.N_STEPS; t += 1) {
+            for (t = 0; t < config.N_STEPS; t += 1) {
 
                 // Steps model and stores sale and rental markets bid and offer prices, and their averages, into their
                 // respective variables
@@ -149,7 +149,7 @@ public class Model {
                 if (t >= config.TIME_TO_START_RECORDING) {
                     // Write results of this time step and run to both multi- and single-run files
                     // ---
-                	//recorder.writeTimeStampResults(config.recordCoreIndicators, t);
+                    //recorder.writeTimeStampResults(config.recordCoreIndicators, t);
                     // +++
                     HouseHPI[t - config.TIME_TO_START_RECORDING] = Model.housingMarketStats.getHPI();
                 }
@@ -160,52 +160,52 @@ public class Model {
                 }
             }
 
-			// Finish each simulation within the recorders (closing single-run files, changing line in multi-run files)
+            // Finish each simulation within the recorders (closing single-run files, changing line in multi-run files)
             // ---
-			//recorder.finishRun(config.recordCoreIndicators);
+            //recorder.finishRun(config.recordCoreIndicators);
             // TODO: Check what this is actually doing and if it is necessary
             // ---
-			///if(config.recordMicroData) transactionRecorder.endOfSim();
-		}
+            ///if(config.recordMicroData) transactionRecorder.endOfSim();
+        }
 
         // After the last simulation, clean up
         // ---
-		//recorder.finish(config.recordCoreIndicators);
+        //recorder.finish(config.recordCoreIndicators);
         //if(config.recordMicroData) transactionRecorder.finish();
 
-		// +++
-		// TODO: either add a .csv output or a console output for HouseHPI[]
+        // +++
+        // TODO: either add a .csv output or a console output for HouseHPI[]
 
         // Stop the program when finished
-		// ---
-		// System.exit(0);
-	}
+        // ---
+        // System.exit(0);
+    }
 
-	private static void setupStatics() {
+    private static void setupStatics() {
         setRecordGeneral();
-		setRecordCoreIndicators(config.recordCoreIndicators);
-		setRecordMicroData(config.recordMicroData);
-	}
+        setRecordCoreIndicators(config.recordCoreIndicators);
+        setRecordMicroData(config.recordMicroData);
+    }
 
-	private static void init() {
-		construction.init();
-		houseSaleMarket.init();
-		houseRentalMarket.init();
-		bank.init();
-		centralBank.init();
+    private static void init() {
+        construction.init();
+        houseSaleMarket.init();
+        houseRentalMarket.init();
+        bank.init();
+        centralBank.init();
         housingMarketStats.init();
         rentalMarketStats.init();
         householdStats.init();
         households.clear();
-	}
+    }
 
-	private static void modelStep() {
+    private static void modelStep() {
         // Update population with births and deaths
         demographics.step();
         // Update number of houses
         construction.step();
         // Updates regional households consumption, housing decisions, and corresponding regional bids and offers
-		for(Household h : households) h.step();
+        for(Household h : households) h.step();
         // Stores sale market bid and offer prices and averages before bids are matched by clearing the market
         housingMarketStats.preClearingRecord();
         // Clears sale market and updates the HPI
@@ -222,11 +222,11 @@ public class Model {
         householdStats.record();
         // Update credit supply statistics // TODO: Check what this actually does and if it should go elsewhere!
         creditSupply.step();
-		// Update bank and interest rate for new mortgages
-		bank.step(Model.households.size());
+        // Update bank and interest rate for new mortgages
+        bank.step(Model.households.size());
         // Update central bank policies (currently empty!)
-		centralBank.step(coreIndicators);
-	}
+        centralBank.step(coreIndicators);
+    }
 
     /**
      * This method handles command line input arguments to
@@ -235,7 +235,7 @@ public class Model {
      *
      * @param args String with the command line arguments
      */
-	private static void handleInputArguments(String[] args) {
+    private static void handleInputArguments(String[] args) {
 
         // Create Options object
         Options options = new Options();
@@ -330,15 +330,15 @@ public class Model {
         }
     }
 
-	/**
-	 * @return Simulated time in months
-	 */
-	static public int getTime() { return t; }
+    /**
+     * @return Simulated time in months
+     */
+    static public int getTime() { return t; }
 
     /**
      * @return Current month of the simulation
      */
-	static public int getMonth() { return t%12 + 1; }
+    static public int getMonth() { return t%12 + 1; }
 
     public MersenneTwister getPrng() { return prng; }
 
@@ -349,10 +349,10 @@ public class Model {
         rentalMarketStats.setActive(true);
     }
 
-	private static void setRecordCoreIndicators(boolean recordCoreIndicators) {
-	    coreIndicators.setActive(recordCoreIndicators);
-	}
+    private static void setRecordCoreIndicators(boolean recordCoreIndicators) {
+        coreIndicators.setActive(recordCoreIndicators);
+    }
 
-	private static void setRecordMicroData(boolean record) { transactionRecorder.setActive(record); }
+    private static void setRecordMicroData(boolean record) { transactionRecorder.setActive(record); }
 
 }
