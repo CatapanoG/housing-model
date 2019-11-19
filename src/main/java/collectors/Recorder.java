@@ -9,7 +9,7 @@ import housing.Model;
 /**************************************************************************************************
  * Class to write output to files
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class Recorder {

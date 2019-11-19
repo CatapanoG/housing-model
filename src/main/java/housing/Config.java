@@ -12,7 +12,7 @@ import java.util.Set;
  * Class to encapsulate all the configuration parameters of the model. It also contains all methods
  * needed to read these parameter values from a configuration properties file.
  *
- * @author Adrian Carro
+ * @author Adrian Carro, Gennaro Catapano
  * @since 20/02/2017
  *
  *************************************************************************************************/

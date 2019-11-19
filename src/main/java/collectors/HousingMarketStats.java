@@ -8,7 +8,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 /**************************************************************************************************
  * Class to collect regional sale market statistics
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HousingMarketStats extends CollectorBase {

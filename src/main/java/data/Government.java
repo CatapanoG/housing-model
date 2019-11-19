@@ -13,7 +13,7 @@ import java.util.List;
  * namely tax and national insurance bands and
  * rates, from external files
  *
- * @author Adrian Carro
+ * @author Adrian Carro, Gennaro Catapano
  * @since 20/05/17
  *
  ************************************************/

@@ -9,7 +9,7 @@ import org.apache.commons.math3.distribution.LogNormalDistribution;
  * Class to encapsulate the reference values for the housing price index, its distribution, as well
  * as reference prices for each house quality band
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HouseSaleMarket {

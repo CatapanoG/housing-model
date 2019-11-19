@@ -5,7 +5,7 @@ package housing;
  * thresholds from the config object into local variables with the purpose of allowing for dynamic
  * policies varying those thresholds over time.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 

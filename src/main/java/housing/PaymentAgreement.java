@@ -5,7 +5,7 @@ package housing;
  * contracts. It keeps track of the monthly payments associated to the contract and the number of
  * payments left.
  *
- * @author daniel, davidrpugh, Adrian Carro
+ * @author daniel, davidrpugh, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class PaymentAgreement {

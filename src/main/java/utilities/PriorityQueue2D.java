@@ -16,7 +16,7 @@ import java.util.TreeSet;
  *
  * Objects inserted into PriorityQueue2D must implement the interface PriorityQueue2D.XYComparator
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class PriorityQueue2D<E> implements Iterable<E> {

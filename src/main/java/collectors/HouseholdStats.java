@@ -7,7 +7,7 @@ import housing.Model;
 /**************************************************************************************************
  * Class to collect regional household statistics
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HouseholdStats extends CollectorBase {

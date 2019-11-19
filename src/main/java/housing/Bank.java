@@ -6,7 +6,7 @@ import java.util.HashSet;
  * Class to represent a mortgage-lender (i.e. a bank or building society), whose only function is
  * to approve/decline mortgage requests, so this is where mortgage-lending policy is encoded
  *
- * @author daniel, davidrpugh, Adrian Carro
+ * @author daniel, davidrpugh, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class Bank {

@@ -10,7 +10,7 @@ import utilities.MeanAboveMedian;
  * committee's power over housing tools" (Feb 2015). See Table A for a list of these indicators and
  * notes on their definition.
  *
- * @author danial, Adrian Carro
+ * @author danial, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class CoreIndicators extends CollectorBase {

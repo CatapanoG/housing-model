@@ -7,7 +7,7 @@ import java.util.Arrays;
 /**************************************************************************************************
  * Class to collect rental market statistics
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class RentalMarketStats extends HousingMarketStats {

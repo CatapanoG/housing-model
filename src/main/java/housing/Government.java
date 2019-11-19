@@ -4,7 +4,7 @@ package housing;
  * Class to represent the government, whose only role in the current model is to collect taxes,
  * including both income tax and national insurance contributions
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class Government {

@@ -5,7 +5,7 @@ import org.apache.commons.math3.random.MersenneTwister;
 /**************************************************************************************************
  * Class to represent the rental market
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HouseRentalMarket extends HousingMarket {

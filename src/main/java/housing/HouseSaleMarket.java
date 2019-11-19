@@ -8,7 +8,7 @@ import utilities.PriorityQueue2D;
 /*******************************************************
  * Class that represents market for houses for-sale.
  * 
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *****************************************************/
 public class HouseSaleMarket extends HousingMarket {

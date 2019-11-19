@@ -11,7 +11,7 @@ import org.apache.commons.math3.random.MersenneTwister;
  * This represents a household who receives an income, consumes, saves and can buy, sell, let, and
  * invest in houses.
  *
- * @author daniel, davidrpugh, Adrian Carro
+ * @author daniel, davidrpugh, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 

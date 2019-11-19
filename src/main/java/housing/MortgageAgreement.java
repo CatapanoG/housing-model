@@ -4,7 +4,7 @@ package housing;
  * Class to represent a mortgage contract, keeping track of the updated principal due, the monthly
  * payment, the number of payments left, etc.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class MortgageAgreement extends PaymentAgreement {

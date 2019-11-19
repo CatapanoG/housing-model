@@ -7,7 +7,7 @@ import java.util.Comparator;
  * rental or the ownership housing market. One can think of it as the file an estate agent would
  * have on a customer who wants to buy or rent a house.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HouseBidderRecord extends HousingMarketRecord {

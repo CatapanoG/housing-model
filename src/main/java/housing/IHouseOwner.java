@@ -8,7 +8,7 @@ package housing;
  * such that they can both participate in the sale
  * market
  * 
- * @author daniel
+ * @author daniel, Gennaro Catapano
  *
  **************************************************/
 public interface IHouseOwner {

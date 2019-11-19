@@ -3,7 +3,7 @@ package housing;
 /**************************************************************************************************
  * Class to represent a house with all its intrinsic characteristics.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class House implements Comparable<House> {

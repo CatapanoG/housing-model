@@ -6,7 +6,7 @@ import org.apache.commons.math3.random.MersenneTwister;
 /**************************************************************************************************
  * Class to implement the behavioural decisions made by households
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class HouseholdBehaviour {

@@ -20,7 +20,7 @@ import utilities.Pdf;
  * Class to read and work with income data before passing it to the Household class. Note that we
  * use here income to refer to gross employment income.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class EmploymentIncome {

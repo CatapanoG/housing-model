@@ -8,7 +8,7 @@ import utilities.PriorityQueue2D;
  * on the bid/bidder, will extend this class. Notably, the comparators for the ordering of both
  * priority queues (price-quality, price-yield) are implemented here.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public abstract class HousingMarketRecord {

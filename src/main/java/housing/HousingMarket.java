@@ -11,7 +11,7 @@ import utilities.PriorityQueue2D;
 /**************************************************************************************************
  * Class that implements the market mechanism behind both the sale and the rental markets
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public abstract class HousingMarket {

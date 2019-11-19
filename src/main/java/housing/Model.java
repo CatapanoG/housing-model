@@ -32,7 +32,7 @@ import org.apache.commons.io.FileUtils;
  *
  * Note that the seed for random number generation is set from the config file.
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 

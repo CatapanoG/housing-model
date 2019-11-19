@@ -11,7 +11,7 @@ import utilities.Pdf;
  * that, throughout this class, we use "real population" to refer to actual numbers of individuals
  * while we leave the term "population" to refer to numbers of agents, i.e., numbers of households
  *
- * @author daniel, Adrian Carro
+ * @author daniel, Adrian Carro, Gennaro Catapano
  *
  *************************************************************************************************/
 public class Demographics {
