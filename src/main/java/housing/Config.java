@@ -91,17 +91,25 @@ public class Config {
     public double RENT_MAX_AMORTIZATION_PERIOD; // Maximum period BTL investors are ready to wait to get back their investment, this determines their minimum demanded rent
     double RENT_REDUCTION;                      // Percentage reduction of demanded rent for every month the property is in the market, not rented
     // Household behaviour parameters: downpayment
-    double DOWNPAYMENT_FTB_SCALE;           // Scale parameter for the log-normal distribution of downpayments by first-time-buyers
-    double DOWNPAYMENT_FTB_SHAPE;           // Shape parameter for the log-normal distribution of downpayments by first-time-buyers
-    double DOWNPAYMENT_OO_SCALE;            // Scale parameter for the log-normal distribution of downpayments by owner-occupiers
-    double DOWNPAYMENT_OO_SHAPE;            // Shape parameter for the log-normal distribution of downpayments by owner-occupiers
-    double DOWNPAYMENT_MIN_INCOME;          // Minimum income percentile to consider any downpayment, below this level, downpayment is set to 0
-    double DOWNPAYMENT_BTL_MEAN;            // Average downpayment, as percentage of house price, by but-to-let investors
-    double DOWNPAYMENT_BTL_EPSILON;         // Standard deviation of the noise
+    double DOWNPAYMENT_MEAN;
+    double DOWNPAYMENT_EPSILON;
+    
+    //double DOWNPAYMENT_FTB_SCALE;           // Scale parameter for the log-normal distribution of downpayments by first-time-buyers
+    //double DOWNPAYMENT_FTB_SHAPE;           // Shape parameter for the log-normal distribution of downpayments by first-time-buyers
+    //double DOWNPAYMENT_OO_SCALE;            // Scale parameter for the log-normal distribution of downpayments by owner-occupiers
+    //double DOWNPAYMENT_OO_SHAPE;            // Shape parameter for the log-normal distribution of downpayments by owner-occupiers
+    //double DOWNPAYMENT_MIN_INCOME;          // Minimum income percentile to consider any downpayment, below this level, downpayment is set to 0
+    //double DOWNPAYMENT_BTL_MEAN;            // Average downpayment, as percentage of house price, by but-to-let investors
+    //double DOWNPAYMENT_BTL_EPSILON;         // Standard deviation of the noise
+    
     // Household behaviour parameters: desired bank balance
-    double DESIRED_BANK_BALANCE_ALPHA;
+    
+    // GC: ---
+    //double DESIRED_BANK_BALANCE_ALPHA;
     double DESIRED_BANK_BALANCE_BETA;
-    double DESIRED_BANK_BALANCE_EPSILON;
+    // GC: ---
+    //double DESIRED_BANK_BALANCE_EPSILON;
+    
     // Household behaviour parameters: selling decision
     double DECISION_TO_SELL_ALPHA;          // Weight of houses per capita effect
     double DECISION_TO_SELL_BETA;           // Weight of interest rate effect
@@ -349,19 +357,22 @@ public class Config {
             ioe.printStackTrace();
         }
         // Finally, compute and set values for all derived parameters
-        setDerivedParams();
+        // ---
+        // setDerivedParams();
     }
 
     /**
      * Method to compute and set values for all derived parameters
      */
-    private void setDerivedParams() {
+    // GC: changed this method to public
+    public void setDerivedParams() {
         // Housing market parameters
         derivedParams.HPI_RECORD_LENGTH = HPA_YEARS_TO_CHECK*constants.MONTHS_IN_YEAR + 3;  // Plus three months in a quarter
         derivedParams.MONTHS_UNDER_OFFER = (double)DAYS_UNDER_OFFER/constants.DAYS_IN_MONTH;
         derivedParams.T = 0.02*TARGET_POPULATION;                   // TODO: Clarify where does this 0.2 come from, and provide explanation for this formula
         derivedParams.E = Math.exp(-1.0/derivedParams.T);           // TODO: Provide explanation for this formula
-        derivedParams.G = Math.exp(-N_QUALITY/derivedParams.T);     // TODO: Provide explanation for this formula
+        //GC: experiment with G param
+        derivedParams.G = Math.exp(-N_QUALITY/derivedParams.T) + 0.00;     // TODO: Provide explanation for this formula
         derivedParams.HPI_LOG_MEDIAN = Math.log(HPI_MEDIAN);
         derivedParams.HPI_REFERENCE = Math.exp(derivedParams.HPI_LOG_MEDIAN + HPI_SHAPE*HPI_SHAPE/2.0);
         // Household behaviour parameters: general

@@ -19,6 +19,23 @@ public class CreditSupply extends CollectorBase {
 		// TODO: This limit in the number of events taken into account to build statistics is not explained in the paper
         // TODO: (affects oo_lti, oo_ltv, btl_ltv, btl_icr, downpayments)
 		setArchiveLength(10000);
+		
+		//GC:
+		mortgageCounterByQuality = new double[config.N_QUALITY];
+		mortgageSumPrincipalByQuality = new double[config.N_QUALITY];
+		mortgageSumInstByQuality = new double[config.N_QUALITY];
+		mortgageAvPrincipalByQuality = new double[config.N_QUALITY];	
+		mortgageAvInstByQuality = new double[config.N_QUALITY];
+		mortgageNByQuality = new double[config.N_QUALITY];
+		for (int i = 0; i<config.N_QUALITY; i++)
+		{
+			mortgageCounterByQuality[i] = 0.0;
+			mortgageSumPrincipalByQuality[i] = 0.0;
+			mortgageSumInstByQuality[i] = 0.0;
+			mortgageAvPrincipalByQuality[i] = 0.0;
+			mortgageAvInstByQuality[i] = 0.0;
+			mortgageNByQuality[i] = 0.0;
+		}
 	}
 
 	/***
@@ -28,12 +45,20 @@ public class CreditSupply extends CollectorBase {
         double oldTotalCredit = totalOOCredit + totalBTLCredit;
         totalOOCredit = 0.0;
         totalBTLCredit = 0.0;
+        
+        //GC:
+        dtiBorrowers = 0.0;
+        
         for(MortgageAgreement m : Model.bank.mortgages) {
         	if(m.isBuyToLet) {
             	totalBTLCredit += m.principal;
         	} else {
         		totalOOCredit += m.principal;
         	}
+        	
+        	// GC:
+        	dtiBorrowers += m.dti;
+        	
         }
         if (oldTotalCredit > 0.0) {
             netCreditGrowth = (totalOOCredit + totalBTLCredit - oldTotalCredit)/oldTotalCredit;
@@ -46,6 +71,44 @@ public class CreditSupply extends CollectorBase {
         mortgageCounter = 0;
         ftbCounter = 0;
         btlCounter = 0;
+        
+        
+        
+        // GC:
+        if (nApprovedMortgages - nBTLMortgages <= 0)
+        {
+        	ooDSR = 0.0;
+        } else {
+        	ooDSR = ooDSRcounter / (nApprovedMortgages - nBTLMortgages);
+        }
+        
+        if (nBTLMortgages == 0)
+        {
+        	btlDSR = 0.0;
+        } else {
+        	btlDSR = btlDSRcounter / nBTLMortgages;
+        }
+        ooDSRcounter = 0.0;
+        btlDSRcounter = 0.0;
+        dtiBorrowers /= Model.bank.mortgages.size();
+        
+		for (int i = 0; i<config.N_QUALITY; i++)
+		{
+			mortgageNByQuality[i] = 0.0;
+			mortgageAvPrincipalByQuality[i] = 0.0;
+			mortgageAvInstByQuality[i] = 0.0;
+			if (mortgageCounterByQuality[i] > 0)
+			{
+				mortgageAvPrincipalByQuality[i] = mortgageSumPrincipalByQuality[i]/mortgageCounterByQuality[i];
+				mortgageAvInstByQuality[i] = mortgageSumInstByQuality[i]/mortgageCounterByQuality[i];
+				mortgageNByQuality[i] = mortgageCounterByQuality[i];
+			}
+			mortgageCounterByQuality[i] = 0.0;
+			mortgageSumPrincipalByQuality[i] = 0.0;
+			mortgageSumInstByQuality[i] = 0.0;
+		}
+        
+        //System.out.println(dtiBorrowers);
 	}
 
 	/***
@@ -68,15 +131,34 @@ public class CreditSupply extends CollectorBase {
 					double icr = Model.rentalMarketStats.getExpAvFlowYield()*approval.purchasePrice/
                             (approval.principal*Model.centralBank.getInterestCoverRatioStressedRate(false));
 					btl_icr.addValue(icr);
+					
+					//GC:
+					btlDSRcounter += approval.monthlyPayment/h.getMonthlyGrossEmploymentIncome();
+					
 				} else {
 					oo_ltv.addValue(100.0*approval.principal/housePrice);
 					oo_lti.addValue(approval.principal/h.getAnnualGrossEmploymentIncome());
+					
+					//GC:
+					ooDSRcounter += approval.monthlyPayment/h.getMonthlyGrossEmploymentIncome();
+					
 				}
 				downpayments.addValue(approval.downPayment);
 			}
 			mortgageCounter += 1;
 			if(approval.isFirstTimeBuyer) ftbCounter += 1;
 			if(approval.isBuyToLet) btlCounter += 1;
+			
+			//GC:
+			approval.dti = ( approval.principal ) / ( h.getAnnualGrossEmploymentIncome() );
+			
+			if(approval.principal > 0.0)
+			{
+				int quality = house.getQuality();
+				mortgageCounterByQuality[quality] += 1 ;
+				mortgageSumPrincipalByQuality[quality] += approval.principal;
+				mortgageSumInstByQuality[quality] += approval.monthlyPayment;
+			}
 		}
 	}
 	
@@ -134,10 +216,81 @@ public class CreditSupply extends CollectorBase {
 		btl_icr = new DescriptiveStatistics(archiveLength);
 		downpayments = new DescriptiveStatistics(archiveLength);
 	}
+	
+    //GC:
+    public double getAvPrincipalByQualityQuartile(int quartile)
+    {
+    	// GC:
+    	int quartSize = (int)(config.N_QUALITY / 4);
+    	int quartSizeCounter = 0;
+    	int startQualityBucket = (quartile - 1)*quartSize;
+    	int endQualityBucket = (quartile)*quartSize - 1;
+    	double returnVal = 0.0;
+    	for (int q = startQualityBucket; q <= endQualityBucket; q++ )
+    	{
+            if (mortgageAvPrincipalByQuality[q] > 0) {
+                returnVal += mortgageAvPrincipalByQuality[q];
+                quartSizeCounter++;                
+            } 
+    	}
+    	
+    	if (quartSizeCounter > 0)
+    	{
+    		returnVal /= quartSizeCounter;
+    	} else {
+    		returnVal = 0.0;
+    	}
+    	
+    	
+    	   	
+    	return returnVal;
+    }
+    
+    //GC:
+    public double getAvInstallByQualityQuartile(int quartile)
+    {
+    	// GC:
+    	int quartSize = (int)(config.N_QUALITY / 4);
+    	int quartSizeCounter = 0;
+    	int startQualityBucket = (quartile - 1)*quartSize;
+    	int endQualityBucket = (quartile)*quartSize - 1;
+    	double returnVal = 0.0;
+    	for (int q = startQualityBucket; q <= endQualityBucket; q++ )
+    	{
+            if (mortgageAvPrincipalByQuality[q] > 0) {
+                returnVal += mortgageAvInstByQuality[q];
+                quartSizeCounter++;                
+            } 
+    	}
+    	
+    	if (quartSizeCounter > 0)
+    	{
+    		returnVal /= quartSizeCounter;
+    	} else {
+    		returnVal = 0.0;
+    	}
+    	   	
+    	return returnVal;
+    }
 
 
 	public int archiveLength; // number of mortgage approvals to remember
-	public double affordability = 0.0;
+	public double affordability = 0.0; // ****
+	
+	// GC:
+	public double ooDSR = 0.0; // Debt service ratio
+	public double btlDSR = 0.0; // Debt service ratio
+	private double ooDSRcounter = 0.0; // Debt service ratio counter
+	private double btlDSRcounter = 0.0; // Debt service ratio counter
+	public double dtiBorrowers = 0.0; // debt to income for borrowers only
+	private double[] mortgageCounterByQuality;
+	private double[] mortgageSumPrincipalByQuality;
+	private double[] mortgageSumInstByQuality;
+	private double[] mortgageAvPrincipalByQuality;
+	private double[] mortgageAvInstByQuality;
+	private double[] mortgageNByQuality;
+	// END GC
+	
 	public DescriptiveStatistics oo_lti;
 	public DescriptiveStatistics oo_ltv;
 	public DescriptiveStatistics btl_ltv;
@@ -147,11 +300,16 @@ public class CreditSupply extends CollectorBase {
 	public int ftbCounter;	
 	public int btlCounter;	
 	public int nApprovedMortgages; // total number of new mortgages
-	public int nFTBMortgages; // number of new first time buyer mortgages given
-	public int nBTLMortgages; // number of new buy to let mortgages given
-	public double totalBTLCredit = 0.0; // buy to let mortgage credit
-	public double totalOOCredit = 0.0; // owner-occupier mortgage credit	
+	public int nFTBMortgages; // number of new first time buyer mortgages given // ***
+	public int nBTLMortgages; // number of new buy to let mortgages given // ***
+	public double totalBTLCredit = 0.0; // buy to let mortgage credit // ***
+	public double totalOOCredit = 0.0; // owner-occupier mortgage credit // ***	 
 	public double netCreditGrowth; // rate of change of credit per month as percentage
 
 	private String outputFolderCopy;
+	
+	public double getAvgDownpayment() 
+	{
+		return downpayments.getMean();
+	}
 }

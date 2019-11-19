@@ -35,6 +35,7 @@ public class HouseholdStats extends CollectorBase {
 	private double  ownerOccupierAnnualisedTotalIncome;
 	private double  rentingAnnualisedTotalIncome;
 	private double  homelessAnnualisedTotalIncome;
+	private double  allAnnualisedTotalIncome;
 
 	// Other fields
 	private double  sumStockYield; // Sum of stock gross rental yields of all currently occupied rental properties
@@ -43,6 +44,13 @@ public class HouseholdStats extends CollectorBase {
     private int     nNonBTLBidsAboveExpAvSalePriceCounter; // Counter for the number of normal (non-BTL) bids with desired housing expenditure above the exp. mov. av. sale price
     private int     nBTLBidsAboveExpAvSalePriceCounter; // Counter for the number of BTL bids with desired housing expenditure above the exp. mov. av. sale price
 
+    // Bank balance
+    private double  bankBalBTL;
+    private double  bankBalOO;
+    private double  bankBalRent;
+    private double  bankBalHomeless;
+    private double  bankBalAll;
+    
 	//------------------------//
 	//----- Constructors -----//
 	//------------------------//
@@ -78,6 +86,14 @@ public class HouseholdStats extends CollectorBase {
         nBTLBidsAboveExpAvSalePrice = 0;
         nNonBTLBidsAboveExpAvSalePriceCounter = 0;
         nBTLBidsAboveExpAvSalePriceCounter = 0;
+        
+        bankBalBTL = 0.0;
+        bankBalOO = 0.0;
+        bankBalRent = 0.0;
+        bankBalHomeless = 0.0;
+        bankBalAll = 0.0;
+        
+        allAnnualisedTotalIncome = 0.0;
     }
 
     public void record() {
@@ -96,10 +112,18 @@ public class HouseholdStats extends CollectorBase {
         rentingAnnualisedTotalIncome = 0.0;
         homelessAnnualisedTotalIncome = 0.0;
         sumStockYield = 0.0;
+        
+        bankBalBTL = 0.0;
+        bankBalOO = 0.0;
+        bankBalRent = 0.0;
+        bankBalHomeless = 0.0;
+        bankBalAll = 0.0;
+        
         // Run through all households counting population in each type and summing their gross incomes
         for (Household h : Model.households) {
             if (h.behaviour.isPropertyInvestor()) {
                 ++nBTL;
+                bankBalBTL += h.getBankBalance();
                 if (h.isBankrupt()) nBTLBankruptcies += 1;
                 // Active BTL investors
                 if (h.nInvestmentProperties() > 0) {
@@ -120,6 +144,7 @@ public class HouseholdStats extends CollectorBase {
                 if (h.isHomeowner()) {
                     ++nNonBTLOwnerOccupier;
                     ownerOccupierAnnualisedTotalIncome += h.getMonthlyGrossTotalIncome();
+                    bankBalOO += h.getBankBalance();
                     // Non-BTL investors renting
                 } else if (h.isRenting()) {
                     ++nRenting;
@@ -129,10 +154,13 @@ public class HouseholdStats extends CollectorBase {
                                 *config.constants.MONTHS_IN_YEAR
                                 /Model.housingMarketStats.getExpAvSalePriceForQuality(h.getHome().getQuality());
                     }
+                    bankBalRent += h.getBankBalance();
                     // Non-BTL investors in social housing
                 } else if (h.isInSocialHousing()) {
+                	bankBalHomeless = h.getBankBalance();
                     ++nNonBTLHomeless;
                     homelessAnnualisedTotalIncome += h.getMonthlyGrossTotalIncome();
+                    bankBalHomeless += h.getBankBalance();
                 }
             }
         }
@@ -147,6 +175,9 @@ public class HouseholdStats extends CollectorBase {
         nBTLBidsAboveExpAvSalePrice = nBTLBidsAboveExpAvSalePriceCounter;
         nNonBTLBidsAboveExpAvSalePriceCounter = 0;
         nBTLBidsAboveExpAvSalePriceCounter = 0;
+        
+        bankBalAll = bankBalBTL + bankBalOO + bankBalRent + bankBalHomeless;
+        allAnnualisedTotalIncome = activeBTLAnnualisedTotalIncome + ownerOccupierAnnualisedTotalIncome + rentingAnnualisedTotalIncome + homelessAnnualisedTotalIncome;
     }
 
     /**
@@ -172,31 +203,32 @@ public class HouseholdStats extends CollectorBase {
     //----- Getter/setter methods -----//
 
     // Getters for numbers of households variables
-    int getnBTL() { return nBTL; }
-    int getnActiveBTL() { return nActiveBTL; }
-    int getnBTLOwnerOccupier() { return nBTLOwnerOccupier; }
-    int getnBTLHomeless() { return nBTLHomeless; }
-    int getnBTLBankruptcies() { return nBTLBankruptcies; }
-    int getnNonBTLOwnerOccupier() { return nNonBTLOwnerOccupier; }
-    int getnRenting() { return nRenting; }
-    int getnNonBTLHomeless() { return nNonBTLHomeless; }
-    int getnNonBTLBankruptcies() { return nNonBTLBankruptcies; }
-    int getnOwnerOccupier() { return nBTLOwnerOccupier + nNonBTLOwnerOccupier; }
-    int getnHomeless() { return nBTLHomeless + nNonBTLHomeless; }
-    int getnNonOwner() { return nRenting + getnHomeless(); }
+    public int getnBTL() { return nBTL; }
+    public int getnActiveBTL() { return nActiveBTL; }
+    public int getnBTLOwnerOccupier() { return nBTLOwnerOccupier; }
+    public int getnBTLHomeless() { return nBTLHomeless; }
+    public int getnBTLBankruptcies() { return nBTLBankruptcies; }
+    public int getnNonBTLOwnerOccupier() { return nNonBTLOwnerOccupier; }
+    public int getnRenting() { return nRenting; }
+    public int getnNonBTLHomeless() { return nNonBTLHomeless; }
+    public int getnNonBTLBankruptcies() { return nNonBTLBankruptcies; }
+    public int getnOwnerOccupier() { return nBTLOwnerOccupier + nNonBTLOwnerOccupier; }
+    public int getnHomeless() { return nBTLHomeless + nNonBTLHomeless; }
+    public int getnNonOwner() { return nRenting + getnHomeless(); }
 
     // Getters for annualised income variables
-    double getActiveBTLAnnualisedTotalIncome() { return activeBTLAnnualisedTotalIncome; }
-    double getOwnerOccupierAnnualisedTotalIncome() { return ownerOccupierAnnualisedTotalIncome; }
-    double getRentingAnnualisedTotalIncome() { return rentingAnnualisedTotalIncome; }
-    double getHomelessAnnualisedTotalIncome() { return homelessAnnualisedTotalIncome; }
-    double getNonOwnerAnnualisedTotalIncome() {
+    public double getActiveBTLAnnualisedTotalIncome() { return activeBTLAnnualisedTotalIncome; }
+    public double getOwnerOccupierAnnualisedTotalIncome() { return ownerOccupierAnnualisedTotalIncome; }
+    public double getRentingAnnualisedTotalIncome() { return rentingAnnualisedTotalIncome; }
+    public double getHomelessAnnualisedTotalIncome() { return homelessAnnualisedTotalIncome; }
+    public double getNonOwnerAnnualisedTotalIncome() {
         return rentingAnnualisedTotalIncome + homelessAnnualisedTotalIncome;
     }
+    public double getAllAnnualisedTotalIncome() { return allAnnualisedTotalIncome; }
 
     // Getters for yield variables
-    double getSumStockYield() { return sumStockYield; }
-    double getAvStockYield() {
+    public double getSumStockYield() { return sumStockYield; }
+    public double getAvStockYield() {
         if(nRenting > 0) {
             return sumStockYield/nRenting;
         } else {
@@ -206,18 +238,26 @@ public class HouseholdStats extends CollectorBase {
 
     // Getters for other variables...
     // ... number of empty houses (total number of houses minus number of non-homeless households)
-    int getnEmptyHouses() {
+    public int getnEmptyHouses() {
         return Model.construction.getHousingStock() + nBTLHomeless + nNonBTLHomeless - Model.households.size();
     }
     // ... proportion of housing stock owned by buy-to-let investors (all rental properties, plus all empty houses not
     // owned by the construction sector)
-    double getBTLStockFraction() {
+    public double getBTLStockFraction() {
         return ((double)(getnEmptyHouses() - Model.housingMarketStats.getnUnsoldNewBuild()
                 + nRenting))/Model.construction.getHousingStock();
     }
     // ... number of normal (non-BTL) bidders with desired housing expenditure above the exponential moving average sale price
-    int getnNonBTLBidsAboveExpAvSalePrice() { return nNonBTLBidsAboveExpAvSalePrice; }
+    public int getnNonBTLBidsAboveExpAvSalePrice() { return nNonBTLBidsAboveExpAvSalePrice; }
     // ... number of BTL bidders with desired housing expenditure above the exponential moving average sale price
-    int getnBTLBidsAboveExpAvSalePrice() { return nBTLBidsAboveExpAvSalePrice; }
+    public int getnBTLBidsAboveExpAvSalePrice() { return nBTLBidsAboveExpAvSalePrice; }
+    
+    
+    // Get bank balances (cross section sum)
+    public double getbankBalAll( ) { return bankBalAll; }
+    public double getBankBalBTL() { return bankBalBTL; }
+    public double getBankBalOO() { return bankBalOO; }
+    public double getBankBalRent() { return bankBalRent; }
+    public double getBankBalHomeless() { return bankBalHomeless; }
 
 }

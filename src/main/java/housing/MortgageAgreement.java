@@ -20,6 +20,9 @@ public class MortgageAgreement extends PaymentAgreement {
 	public final boolean    isFirstTimeBuyer;
 	public double           principal; // Remaining principal to be paid off
 	double                  monthlyInterestRate;
+	
+	//GC:
+	public double			dti;
 
     //------------------------//
     //----- Constructors -----//

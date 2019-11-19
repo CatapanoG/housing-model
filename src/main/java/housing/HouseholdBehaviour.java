@@ -19,9 +19,13 @@ public class HouseholdBehaviour {
     private MersenneTwister	        prng;
     private boolean                 BTLInvestor;
     private double                  BTLCapGainCoefficient; // Sensitivity of BTL investors to capital gain, 0.0 cares only about rental yield, 1.0 cares only about cap gain
-    private double                  propensityToSave;
-    private LogNormalDistribution   downpaymentDistFTB; // Size distribution for downpayments of first-time-buyers
-    private LogNormalDistribution   downpaymentDistOO; // Size distribution for downpayments of owner-occupiers
+    
+    // GC: ---
+    // private double                  propensityToSave;
+    // GC: --- downpayment simplification
+    //private LogNormalDistribution   downpaymentDistFTB; // Size distribution for downpayments of first-time-buyers
+    // GC: --- downpayment simplification
+    //private LogNormalDistribution   downpaymentDistOO; // Size distribution for downpayments of owner-occupiers
 
     //------------------------//
     //----- Constructors -----//
@@ -38,10 +42,15 @@ public class HouseholdBehaviour {
 		this.prng = prng;  // initialize the random number generator
 
         // Set downpayment distributions for both first-time-buyers and owner-occupiers
-        downpaymentDistFTB = new LogNormalDistribution(this.prng, config.DOWNPAYMENT_FTB_SCALE, config.DOWNPAYMENT_FTB_SHAPE);
-        downpaymentDistOO = new LogNormalDistribution(this.prng, config.DOWNPAYMENT_OO_SCALE, config.DOWNPAYMENT_OO_SHAPE);
-	    // Compute propensity to save, so that it is constant for a given household
-        propensityToSave = config.DESIRED_BANK_BALANCE_EPSILON * prng.nextGaussian();
+        
+		// --- GC: downpayment simplification
+		// downpaymentDistFTB = new LogNormalDistribution(this.prng, config.DOWNPAYMENT_FTB_SCALE, config.DOWNPAYMENT_FTB_SHAPE);
+        // --- GC: downpayment simplification
+		// downpaymentDistOO = new LogNormalDistribution(this.prng, config.DOWNPAYMENT_OO_SCALE, config.DOWNPAYMENT_OO_SHAPE);
+	    
+		// Compute propensity to save, so that it is constant for a given household
+        // GC: ---
+		// propensityToSave = config.DESIRED_BANK_BALANCE_EPSILON * prng.nextGaussian();
         // Decide if household is a BTL investor and, if so, its tendency to seek capital gains or rental yields
 		BTLCapGainCoefficient = 0.0;
         if(incomePercentile > config.MIN_INVESTOR_PERCENTILE &&
@@ -85,8 +94,13 @@ public class HouseholdBehaviour {
 	 * @param annualGrossTotalIncome Household
      */
 	double getDesiredBankBalance(double annualGrossTotalIncome) {
-		return Math.exp(config.DESIRED_BANK_BALANCE_ALPHA
-                + config.DESIRED_BANK_BALANCE_BETA*Math.log(annualGrossTotalIncome) + propensityToSave);
+		
+		// GC: commented out ---
+		//return Math.exp(config.DESIRED_BANK_BALANCE_ALPHA
+        //        + config.DESIRED_BANK_BALANCE_BETA*Math.log(annualGrossTotalIncome) + propensityToSave);
+		
+		// GC: +++ (simplified, but the mechanism is basically the same)
+		return config.DESIRED_BANK_BALANCE_BETA*annualGrossTotalIncome; 
 	}
 
     //----- Owner-Occupier behaviour -----//
@@ -115,14 +129,19 @@ public class HouseholdBehaviour {
 	 * @param quality Quality of the house ot be sold
 	 * @param principal Amount of principal left on any mortgage on this house
 	 */
-	double getInitialSalePrice(int quality, double principal) {
+	double getInitialSalePrice(int quality, double principal, double pricePaid) {
         double exponent = config.SALE_MARKUP
                 + Math.log(Model.housingMarketStats.getExpAvSalePriceForQuality(quality) + 1.0)
-                - config.SALE_WEIGHT_DAYS_ON_MARKET*Math.log((Model.housingMarketStats.getExpAvDaysOnMarket()
-                + 1.0)/(config.constants.DAYS_IN_MONTH + 1.0))
+                - config.SALE_WEIGHT_DAYS_ON_MARKET*Math.log((Model.housingMarketStats.getExpAvDaysOnMarket() + 1.0)/(config.constants.DAYS_IN_MONTH + 1.0))
                 + config.SALE_EPSILON*prng.nextGaussian();
         // TODO: ExpAv days on market could be computed for each quality band so as to use here only the correct one
-        return Math.max(Math.exp(exponent), principal);
+        //System.out.println(Model.housingMarketStats.getExpAvSalePriceForQuality(quality));
+        //System.out.println(Math.max(Math.exp(exponent), principal));
+        //System.out.println("***");
+        //GC: added
+        return Math.max(Math.exp(exponent), Math.max(principal, pricePaid));
+        //GC: original
+        //return Math.max(Math.exp(exponent), principal);
 	}
 
 	/**
@@ -139,12 +158,10 @@ public class HouseholdBehaviour {
 	 * @return True if the owner-occupier decides to sell the house and false otherwise.
 	 */
 	boolean decideToSellHome() {
-        // TODO: This if implies BTL agents never sell their homes, need to explain in paper!
+        // TODO: This 'if' implies BTL agents never sell their homes, need to explain in paper!
         return !isPropertyInvestor() && (prng.nextDouble() < config.derivedParams.MONTHLY_P_SELL*(1.0
-                + config.DECISION_TO_SELL_ALPHA*(config.DECISION_TO_SELL_HPC
-                - (double)Model.houseSaleMarket.getnHousesOnMarket()/Model.households.size())
-                + config.DECISION_TO_SELL_BETA*(config.DECISION_TO_SELL_INTEREST
-                - Model.bank.getMortgageInterestRate())));
+                + config.DECISION_TO_SELL_ALPHA*(config.DECISION_TO_SELL_HPC - (double)Model.houseSaleMarket.getnHousesOnMarket()/Model.households.size())
+                + config.DECISION_TO_SELL_BETA*(config.DECISION_TO_SELL_INTEREST - Model.bank.getMortgageInterestRate())));
     }
 
 	/**
@@ -158,6 +175,9 @@ public class HouseholdBehaviour {
 			return housePrice;
 		}
 		double downpayment;
+		
+		// GC: commented:
+		/*
 		if (me.isFirstTimeBuyer()) {
 		    // Since the function of the HPI is to move the down payments distribution upwards or downwards to
             // accommodate current price levels, and the distribution is itself aggregate, we use the aggregate HPI
@@ -170,6 +190,14 @@ public class HouseholdBehaviour {
 			downpayment = Model.housingMarketStats.getHPI()*downpaymentDistOO.inverseCumulativeProbability(Math.max(0.0,
                     (me.incomePercentile - config.DOWNPAYMENT_MIN_INCOME)/(1 - config.DOWNPAYMENT_MIN_INCOME)));
 		}
+		*/
+		
+		// GC: +++
+		// GC: uniform the downpayment behaviour for all investor classes, as we don't have detailed data.
+		downpayment = housePrice*(Math.max(0.0,
+				config.DOWNPAYMENT_MEAN + config.DOWNPAYMENT_EPSILON * prng.nextGaussian()));
+		// GC: end
+		
 		if (downpayment > me.getBankBalance()) downpayment = me.getBankBalance();
 		return downpayment;
 	}
@@ -186,10 +214,24 @@ public class HouseholdBehaviour {
 	 * @param sale The HouseOfferRecord of the house that is on the market.
 	 ********************************************************/
 	double rethinkHouseSalePrice(HouseOfferRecord sale) {
+		
+		//GC: added
+		//double priceReductionSoFar = (1 - sale.getPrice()/sale.getInitialListedPrice())*100;
+		
+		//System.out.println(priceReductionSoFar);
+		
+		//if(prng.nextDouble() < config.P_SALE_PRICE_REDUCE && 
+		//		priceReductionSoFar < 0*config.REDUCTION_MU) {
+			
+			//System.out.println("price reduction!");
+		
+		//GC: old condition
 		if(prng.nextDouble() < config.P_SALE_PRICE_REDUCE) {
+			
 			double logReduction = config.REDUCTION_MU + (prng.nextGaussian()*config.REDUCTION_SIGMA);
 			return(sale.getPrice()*(1.0 - Math.exp(logReduction)/100.0));
 		}
+		
 		return(sale.getPrice());
 	}
 
@@ -209,10 +251,40 @@ public class HouseholdBehaviour {
                 decideDownPayment(me, purchasePrice), true);
         int newHouseQuality = Model.housingMarketStats.getMaxQualityForPrice(purchasePrice);
         if (newHouseQuality < 0) return false; // can't afford a house anyway
-        double costOfHouse = mortgageApproval.monthlyPayment*config.constants.MONTHS_IN_YEAR
-				- purchasePrice*getLongTermHPAExpectation();
+        
+        // GC: +++
+        // A mechanism to prevent a failed downpayment constraint.
+        // Also prevents negative bids.
+        if (mortgageApproval.downPayment > me.getBankBalance() || purchasePrice <= 0) 
+        {
+        	return false; // GC: +++
+        }
+        // END GC: +++
+        
+        //double costOfHouse = mortgageApproval.monthlyPayment*config.constants.MONTHS_IN_YEAR
+				//- purchasePrice*getLongTermHPAExpectation();
+        //double costOfRent = Model.rentalMarketStats.getExpAvSalePriceForQuality(newHouseQuality)
+        //        *config.constants.MONTHS_IN_YEAR;
+        
+        
+		//GC: +++
+		//Adding the downpayment as a cost to be considered
+        
+        
+        int currHouseQuality = me.targetHouseQuality;
+        if(newHouseQuality < currHouseQuality && prng.nextDouble() > 0.005)
+        {
+        	return false;
+        } 
+        me.targetHouseQuality = newHouseQuality;
+        
+        
+        double costOfHouse = (mortgageApproval.monthlyPayment*config.constants.MONTHS_IN_YEAR)*config.MORTGAGE_DURATION_YEARS
+        		- purchasePrice
+				+ mortgageApproval.downPayment;
         double costOfRent = Model.rentalMarketStats.getExpAvSalePriceForQuality(newHouseQuality)
-                *config.constants.MONTHS_IN_YEAR;
+                *config.constants.MONTHS_IN_YEAR*config.MORTGAGE_DURATION_YEARS;
+        //END GC
         return prng.nextDouble() < sigma(config.SENSITIVITY_RENT_OR_PURCHASE*(costOfRent*(1.0
                 + config.PSYCHOLOGICAL_COST_OF_RENTING) - costOfHouse));
     }
@@ -342,8 +414,13 @@ public class HouseholdBehaviour {
         // TODO: 10% above the average price of top quality houses. The effect of this is to prevent fast increases of
         // TODO: price as BTL investors buy all supply till prices are too high for everybody. Fairly unclear mechanism,
         // TODO: check for removal!
-        return(Math.min(Model.bank.getMaxMortgage(me, false),
-                1.1*Model.housingMarketStats.getExpAvSalePriceForQuality(config.N_QUALITY-1)));
+    	//GC: original:
+        //return(Math.min(Model.bank.getMaxMortgage(me, false),
+        //        1.1*Model.housingMarketStats.getExpAvSalePriceForQuality(config.N_QUALITY-1)));
+    	//GC: modified
+    	double bid = Math.min(Model.bank.getMaxMortgage(me, false),
+    	               1.1*Model.housingMarketStats.getExpAvSalePriceForQuality(config.N_QUALITY-1));
+    	return Math.max(0, bid);
     }
 
 	/**

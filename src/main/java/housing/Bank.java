@@ -28,6 +28,7 @@ public class Bank {
     // Credit supply strategy fields
     private double		                supplyTarget; // target supply of mortgage lending (pounds)
     private double		                supplyVal; // monthly supply of mortgage loans (pounds)
+    private double                      supplyValLag;
     private double		                dDemand_dInterest; // rate of change of demand with interest rate (pounds)
     private int                         nOOMortgagesOverLTI; // Number of mortgages for owner-occupying that go over the LTI cap this time step
     private int                         nOOMortgages; // Total number of mortgages for owner-occupying
@@ -69,6 +70,9 @@ public class Bank {
         // Setup initial LTI internal policy thresholds
         firstTimeBuyerLTILimit = config.BANK_MAX_FTB_LTI;
         ownerOccupierLTILimit = config.BANK_MAX_OO_LTI;
+        
+        supplyVal = 0.0;
+        supplyValLag = 0.0;
     }
 	
 	/**
@@ -84,6 +88,7 @@ public class Bank {
 	 *  Reset counters for the next month
 	 */
 	private void resetMonthlyCounters() {
+		supplyValLag = supplyVal;
 		supplyVal = 0.0;
         nOOMortgagesOverLTI = 0;
         nOOMortgages = 0;
@@ -95,7 +100,11 @@ public class Bank {
      * current demand and the target supply
 	 */
 	private double recalculateInterestRate() {
-		double rate = getMortgageInterestRate() + 0.5*(supplyVal - supplyTarget)/dDemand_dInterest;
+		// GC: original:
+		// double rate = getMortgageInterestRate() + 0.5*(supplyVal - supplyTarget)/dDemand_dInterest;
+		// GC: modified
+		double rate = getMortgageInterestRate() + 20.0*(supplyVal - supplyTarget)/dDemand_dInterest;
+		// GC: modified END
 		if (rate < baseRate) rate = baseRate;
 		return rate;
 	}
@@ -120,8 +129,11 @@ public class Bank {
      */
 	private void recalculateMonthlyPaymentFactor() {
 		double r = getMortgageInterestRate()/config.constants.MONTHS_IN_YEAR;
+		
+		// GC: this is the correct payment factor formula for the French amortisation (and it is strictly increasing in 'r')
 		monthlyPaymentFactor = r/(1.0 - Math.pow(1.0 + r, -config.derivedParams.N_PAYMENTS));
-        monthlyPaymentFactorBTL = r;
+        
+		monthlyPaymentFactorBTL = r;
 	}
 
 	/**
@@ -183,14 +195,32 @@ public class Bank {
 
 		// --- LTV constraint
 		approval.principal = housePrice*getLoanToValueLimit(h.isFirstTimeBuyer(), isHome);
+		
+		//System.out.println("***");
+		//System.out.println("LTV  : " + approval.principal);
 
 		if(isHome) {
 			// --- affordability constraint TODO: affordability for BTL?
+			// GC: double-checked, it makes sense
 			affordable_principal = Math.max(0.0,config.CENTRAL_BANK_AFFORDABILITY_COEFF*h.getMonthlyNetTotalIncome())
                     / getMonthlyPaymentFactor(isHome);
+			
+			/*
+			if (affordable_principal < approval.principal)
+			{
+				System.out.println("CONSTRAINT!");
+				System.out.println("spre: " + interestSpread);
+				System.out.println("fact: " + getMonthlyPaymentFactor(isHome));
+				System.out.println("affo: " + affordable_principal);
+			}
+			*/
+			
 			approval.principal = Math.min(approval.principal, affordable_principal);
+			//System.out.println("affo  : " + approval.principal);
+			//System.out.println("afft  : " + config.CENTRAL_BANK_AFFORDABILITY_COEFF*h.getMonthlyNetTotalIncome());
 
 			// --- lti constraint
+			// GC: checked, it makes sense
 			lti_principal = h.getAnnualGrossEmploymentIncome()*getLoanToIncomeLimit(h.isFirstTimeBuyer(), isHome);
 			approval.principal = Math.min(approval.principal, lti_principal);
 		} else {
@@ -202,10 +232,10 @@ public class Bank {
 		
 		approval.downPayment = housePrice - approval.principal;
 
-        if(liquidWealth < approval.downPayment) {
+        if(liquidWealth + 1 < approval.downPayment) {
 			System.out.println("Failed down-payment constraint: bank balance = " + liquidWealth + " downpayment = "
-                    + approval.downPayment);
-			System.exit(0);
+                    + approval.downPayment + " shortfall = " + (approval.downPayment - liquidWealth));
+			//System.exit(0);
 		}
 		// --- allow larger downpayments
 		if(desiredDownPayment < 0.0) desiredDownPayment = 0.0;
@@ -216,10 +246,21 @@ public class Bank {
 			approval.principal = housePrice - desiredDownPayment;
 		}
 		
-		approval.monthlyPayment = approval.principal* getMonthlyPaymentFactor(isHome);
+		approval.monthlyPayment = approval.principal * getMonthlyPaymentFactor(isHome);
 		approval.nPayments = config.derivedParams.N_PAYMENTS;
 		approval.monthlyInterestRate = r;
 		approval.purchasePrice = approval.principal + approval.downPayment;
+		
+		/*
+		System.out.println("***");
+		System.out.println("Hous: " + housePrice);
+		System.out.println("prin: " + approval.principal);
+		System.out.println("down: " + approval.downPayment);
+		System.out.println("rata: " + approval.monthlyPayment);
+		System.out.println("inte: " + approval.monthlyInterestRate*12);
+		System.out.println("spre: " + interestSpread);
+		System.out.println("base: " + baseRate);
+		*/
 
 		return approval;
 	}
@@ -242,7 +283,8 @@ public class Bank {
 
         // LTV constraint: maximum house price the household could pay with the maximum mortgage the bank could provide
         // to the household given the Loan-To-Value limit and the maximum down-payment the household could make
-		max_price = max_downpayment/(1.0 - getLoanToValueLimit(h.isFirstTimeBuyer(), isHome));
+		// GC: okay, checked!
+        max_price = max_downpayment/(1.0 - getLoanToValueLimit(h.isFirstTimeBuyer(), isHome));
 
 		if(isHome) { // No LTI nor affordability constraints for BTL investors
 			// Affordability constraint
@@ -324,4 +366,16 @@ public class Bank {
         }
 		return limit;
     }
+	
+	// *** GC: MY CODE *** 
+	
+	public void setAllLTV(double ftbLTV, double ooLTV, double btlLTV)
+	{
+        firstTimeBuyerLTVLimit = ftbLTV;
+        ownerOccupierLTVLimit = ooLTV;
+        buyToLetLTVLimit = btlLTV;
+	}
+	
+	public double getSupplyVal() { return supplyValLag; }
+	
 }

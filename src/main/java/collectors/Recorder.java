@@ -134,20 +134,20 @@ public class Recorder {
                 interestRateSpread.print(", ");
             }
             // Write core indicators results
-            ooLTI.print(Model.coreIndicators.getOwnerOccupierLTIMeanAboveMedian());
-            btlLTV.print(Model.coreIndicators.getBuyToLetLTVMean());
-            creditGrowth.print(Model.coreIndicators.getHouseholdCreditGrowth());
-            debtToIncome.print(Model.coreIndicators.getDebtToIncome());
-            ooDebtToIncome.print(Model.coreIndicators.getOODebtToIncome());
-            mortgageApprovals.print(Model.coreIndicators.getMortgageApprovals());
-            housingTransactions.print(Model.coreIndicators.getHousingTransactions());
-            advancesToFTBs.print(Model.coreIndicators.getAdvancesToFTBs());
-            advancesToBTL.print(Model.coreIndicators.getAdvancesToBTL());
-            advancesToHomeMovers.print(Model.coreIndicators.getAdvancesToHomeMovers());
-            priceToIncome.print(Model.coreIndicators.getPriceToIncome());
-            rentalYield.print(Model.coreIndicators.getAvStockYield());
+            ooLTI.print(Model.coreIndicators.getOwnerOccupierLTIMeanAboveMedian());        // * +++
+            btlLTV.print(Model.coreIndicators.getBuyToLetLTVMean());                       // * +++
+            creditGrowth.print(Model.coreIndicators.getHouseholdCreditGrowth());           // *
+            debtToIncome.print(Model.coreIndicators.getDebtToIncome());                    // * +++
+            ooDebtToIncome.print(Model.coreIndicators.getOODebtToIncome());                // * +++
+            mortgageApprovals.print(Model.coreIndicators.getMortgageApprovals());          // * +++
+            housingTransactions.print(Model.coreIndicators.getHousingTransactions());      // * +++
+            advancesToFTBs.print(Model.coreIndicators.getAdvancesToFTBs());                // *
+            advancesToBTL.print(Model.coreIndicators.getAdvancesToBTL());                  // *
+            advancesToHomeMovers.print(Model.coreIndicators.getAdvancesToHomeMovers());    // *
+            priceToIncome.print(Model.coreIndicators.getPriceToIncome());                  // * +++
+            rentalYield.print(Model.coreIndicators.getAvStockYield());                     // * +++
             housePriceGrowth.print(Model.coreIndicators.getQoQHousePriceGrowth());
-            interestRateSpread.print(Model.coreIndicators.getInterestRateSpread());
+            interestRateSpread.print(Model.coreIndicators.getInterestRateSpread());        // * +++
         }
 
         // Write general output results to output file
@@ -155,38 +155,38 @@ public class Recorder {
                 // Number of households of each type
                 Model.householdStats.getnNonBTLHomeless() + ", " +
                 Model.householdStats.getnBTLHomeless() + ", " +
-                Model.householdStats.getnHomeless() + ", " +
-                Model.householdStats.getnRenting() + ", " +
-                Model.householdStats.getnNonOwner() + ", " +
+                Model.householdStats.getnHomeless() + ", " +            // * +++
+                Model.householdStats.getnRenting() + ", " +             // * +++
+                Model.householdStats.getnNonOwner() + ", " +            
                 Model.householdStats.getnNonBTLOwnerOccupier() + ", " +
                 Model.householdStats.getnBTLOwnerOccupier() + ", " +
-                Model.householdStats.getnOwnerOccupier() + ", " +
+                Model.householdStats.getnOwnerOccupier() + ", " +       // * +++
                 Model.householdStats.getnActiveBTL() + ", " +
-                Model.householdStats.getnBTL() + ", " +
-                Model.householdStats.getnNonBTLBankruptcies() + ", " +
-                Model.householdStats.getnBTLBankruptcies() + ", " +
+                Model.householdStats.getnBTL() + ", " +                 // * +++
+                Model.householdStats.getnNonBTLBankruptcies() + ", " +  // * +++
+                Model.householdStats.getnBTLBankruptcies() + ", " +     // * +++
                 Model.households.size() + ", " +
                 // Numbers of houses of each type
-                Model.construction.getHousingStock() + ", " +
-                Model.construction.getnNewBuild() + ", " +
+                Model.construction.getHousingStock() + ", " +           // * +++
+                Model.construction.getnNewBuild() + ", " +              // * +++
                 Model.housingMarketStats.getnUnsoldNewBuild() + ", " +
-                Model.householdStats.getnEmptyHouses() + ", " +
-                Model.householdStats.getBTLStockFraction() + ", " +
+                Model.householdStats.getnEmptyHouses() + ", " +         // * +++
+                Model.householdStats.getBTLStockFraction() + ", " +     // * +++
                 // House sale market data
                 Model.housingMarketStats.getHPI() + ", " +
-                Model.housingMarketStats.getAnnualHPA() + ", " +
-                Model.housingMarketStats.getAvBidPrice() + ", " +
-                Model.housingMarketStats.getAvOfferPrice() + ", " +
-                Model.housingMarketStats.getAvSalePrice() + ", " +
+                Model.housingMarketStats.getAnnualHPA() + ", " +        
+                Model.housingMarketStats.getAvBidPrice() + ", " +       // *
+                Model.housingMarketStats.getAvOfferPrice() + ", " +     // *
+                Model.housingMarketStats.getAvSalePrice() + ", " +      // *
                 Model.housingMarketStats.getExpAvSalePrice() + ", " +
-                Model.housingMarketStats.getAvDaysOnMarket() + ", " +
+                Model.housingMarketStats.getAvDaysOnMarket() + ", " +   // *
                 Model.housingMarketStats.getExpAvDaysOnMarket() + ", " +
-                Model.housingMarketStats.getnBuyers() + ", " +
-                Model.housingMarketStats.getnBTLBuyers() + ", " +
-                Model.housingMarketStats.getnSellers() + ", " +
+                Model.housingMarketStats.getnBuyers() + ", " +          // *
+                Model.housingMarketStats.getnBTLBuyers() + ", " +       // *
+                Model.housingMarketStats.getnSellers() + ", " +         // *
                 Model.housingMarketStats.getnNewSellers() + ", " +
-                Model.housingMarketStats.getnBTLSellers() + ", " +
-                Model.housingMarketStats.getnSales() + ", " +
+                Model.housingMarketStats.getnBTLSellers() + ", " +      // *
+                Model.housingMarketStats.getnSales() + ", " +           // *
                 Model.householdStats.getnNonBTLBidsAboveExpAvSalePrice() + ", " +
                 Model.householdStats.getnBTLBidsAboveExpAvSalePrice() + ", " +
                 Model.housingMarketStats.getnSalesToBTL() + ", " +
@@ -194,16 +194,16 @@ public class Recorder {
                 // Rental market data
                 Model.rentalMarketStats.getHPI() + ", " +
                 Model.rentalMarketStats.getAnnualHPA() + ", " +
-                Model.rentalMarketStats.getAvBidPrice() + ", " +
-                Model.rentalMarketStats.getAvOfferPrice() + ", " +
-                Model.rentalMarketStats.getAvSalePrice() + ", " +
-                Model.rentalMarketStats.getAvDaysOnMarket() + ", " +
-                Model.rentalMarketStats.getnBuyers() + ", " +
-                Model.rentalMarketStats.getnSellers() + ", " +
+                Model.rentalMarketStats.getAvBidPrice() + ", " +        // get
+                Model.rentalMarketStats.getAvOfferPrice() + ", " +      // get
+                Model.rentalMarketStats.getAvSalePrice() + ", " +       // get
+                Model.rentalMarketStats.getAvDaysOnMarket() + ", " +    // get
+                Model.rentalMarketStats.getnBuyers() + ", " +           // get
+                Model.rentalMarketStats.getnSellers() + ", " +          // get
                 Model.rentalMarketStats.getnSales() + ", " +
                 Model.rentalMarketStats.getExpAvFlowYield() + ", " +
                 // Credit data
-                Model.creditSupply.getnRegisteredMortgages());
+                Model.creditSupply.getnRegisteredMortgages());       // *
     }
 
     public void finishRun(boolean recordCoreIndicators) {

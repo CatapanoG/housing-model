@@ -39,7 +39,7 @@ public class CoreIndicators extends CollectorBase {
     }
 
     // Owner-occupier mortgage LTI ratio (mean above the median)
-	double getOwnerOccupierLTIMeanAboveMedian() {
+	public double getOwnerOccupierLTIMeanAboveMedian() {
         if (Model.creditSupply.oo_lti.getN() > 0) {
             return Model.creditSupply.oo_lti.apply(new MeanAboveMedian());
         } else {
@@ -48,7 +48,7 @@ public class CoreIndicators extends CollectorBase {
 	}
 
     // Owner-occupier mortage LTV ratio (mean above the median)
-	double getOwnerOccupierLTVMeanAboveMedian() {
+	public double getOwnerOccupierLTVMeanAboveMedian() {
         if (Model.creditSupply.oo_ltv.getN() > 0) {
             return Model.creditSupply.oo_ltv.apply(new MeanAboveMedian());
         } else {
@@ -57,9 +57,18 @@ public class CoreIndicators extends CollectorBase {
 	}
 
     // Buy-to-let loan-to-value ratio (mean)
-	double getBuyToLetLTVMean() {
+	public double getBuyToLetLTVMean() {
         if (Model.creditSupply.btl_ltv.getN() > 0) {
             return Model.creditSupply.btl_ltv.getMean();
+        } else {
+            return 0.0;
+        }
+    }
+	
+    // OO loan-to-value ratio (mean)
+	public double getOwnerOccupierLTVMean() {
+        if (Model.creditSupply.oo_ltv.getN() > 0) {
+            return Model.creditSupply.oo_ltv.getMean();
         } else {
             return 0.0;
         }
@@ -67,10 +76,10 @@ public class CoreIndicators extends CollectorBase {
 
 	// Annualised household credit growth (credit growth: rate of change of credit, current month new credit divided by
     //  new credit in previous step)
-	double getHouseholdCreditGrowth() { return Model.creditSupply.netCreditGrowth*12.0*100.0; }
+	public double getHouseholdCreditGrowth() { return Model.creditSupply.netCreditGrowth*12.0*100.0; }
 
 	// Household mortgage debt to income ratio (%)
-	double getDebtToIncome() {
+	public double getDebtToIncome() {
 		return 100.0*(Model.creditSupply.totalBTLCredit + Model.creditSupply.totalOOCredit)
                 /(Model.householdStats.getOwnerOccupierAnnualisedTotalIncome()
                 + Model.householdStats.getActiveBTLAnnualisedTotalIncome()
@@ -78,36 +87,37 @@ public class CoreIndicators extends CollectorBase {
 	}
 
 	// Household debt to income ratio (owner-occupier mortgages only) (%)
-	double getOODebtToIncome() {
+	public double getOODebtToIncome() {
         return 100.0*Model.creditSupply.totalOOCredit/Model.householdStats.getOwnerOccupierAnnualisedTotalIncome();
     }
 
 	// Number of mortgage approvals per month (scaled for 26.5 million households)
-	int getMortgageApprovals() {
-		return (int)(Model.creditSupply.nApprovedMortgages*config.getUKHouseholds()
-                /Model.households.size());
+	public int getMortgageApprovals() {
+		//return (int)(Model.creditSupply.nApprovedMortgages*config.getUKHouseholds()
+        //        /Model.households.size());
+		return (int)(Model.creditSupply.nApprovedMortgages);
 	}
 
     // Number of houses bought/sold per month (scaled for 26.5 million households)
-	int getHousingTransactions() {
+	public int getHousingTransactions() {
 		return (int)(Model.housingMarketStats.getnSales()*config.getUKHouseholds()
                 /Model.households.size());
 	}
 
 	// Number of advances to first-time-buyers (scaled for 26.5 million households)
-	int getAdvancesToFTBs() {
+	public int getAdvancesToFTBs() {
 		return (int)(Model.creditSupply.nFTBMortgages*config.getUKHouseholds()
                 /Model.households.size());
 	}
 
     // Number of advances to buy-to-let purchasers (scaled for 26.5 million households)
-	int getAdvancesToBTL() {
+	public int getAdvancesToBTL() {
 		return (int)(Model.creditSupply.nBTLMortgages*config.getUKHouseholds()
                 /Model.households.size());
 	}
 
 	// Number of advances to home-movers (scaled for 26.5 million households)
-	int getAdvancesToHomeMovers() { return(getMortgageApprovals() - getAdvancesToFTBs() - getAdvancesToBTL()); }
+	public int getAdvancesToHomeMovers() { return(getMortgageApprovals() - getAdvancesToFTBs() - getAdvancesToBTL()); }
 
     // House price to household disposable income ratio
     // TODO: ATTENTION ---> Gross total income is used here, not disposable income! Post-tax income should be used!
@@ -124,11 +134,11 @@ public class CoreIndicators extends CollectorBase {
 
 	// Wrapper around the HouseHoldStats method, which computes the average stock gross rental yield for all currently
     // occupied rental properties (%)
-	double getAvStockYield() { return 100.0*Model.householdStats.getAvStockYield(); }
+	public double getAvStockYield() { return 100.0*Model.householdStats.getAvStockYield(); }
 
 	// Wrapper around the HousingMarketStats method, which computes the quarter on quarter appreciation in HPI
-	double getQoQHousePriceGrowth() { return Model.housingMarketStats.getQoQHousePriceGrowth(); }
+	public double getQoQHousePriceGrowth() { return Model.housingMarketStats.getQoQHousePriceGrowth(); }
 
 	// Spread between mortgage-lender interest rate and bank base-rate (%)
-	double getInterestRateSpread() { return 100.0*Model.bank.interestSpread; }
+	public double getInterestRateSpread() { return 100.0*Model.bank.interestSpread; }
 }

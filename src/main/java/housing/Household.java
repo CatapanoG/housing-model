@@ -29,7 +29,9 @@ public class Household implements IHouseOwner {
     public HouseholdBehaviour   behaviour; // Behavioural plugin
 
     double                      incomePercentile; // Fixed for the whole lifetime of the household
+    
 
+    
     private House                           home;
     private Map<House, PaymentAgreement>    housePayments = new TreeMap<>(); // Houses owned and their payment agreements
     private Config                          config = Model.config; // Passes the Model's configuration parameters object to a private field
@@ -39,6 +41,13 @@ public class Household implements IHouseOwner {
     private double                          monthlyGrossRentalIncome; // Keeps track of monthly rental income, as only tenants keep a reference to the rental contract, not landlords
     private boolean                         isFirstTimeBuyer;
     private boolean                         isBankrupt;
+    
+    //GC: ++
+    public int                  targetHouseQuality;
+    double						incomePercentileTrue;
+    int							moBankrupt;
+    boolean 					Bankrupt;
+    boolean                     IncomeBoost;
 
     //------------------------//
     //----- Constructors -----//
@@ -59,9 +68,16 @@ public class Household implements IHouseOwner {
         behaviour = new HouseholdBehaviour(this.prng, incomePercentile);
         // Find initial values for the annual and monthly gross employment income
         annualGrossEmploymentIncome = data.EmploymentIncome.getAnnualGrossEmploymentIncome(age, incomePercentile);
+        //System.out.println("Age: " + age + "Percentile: " + incomePercentile + "Income: " + annualGrossEmploymentIncome );
         monthlyGrossEmploymentIncome = annualGrossEmploymentIncome/config.constants.MONTHS_IN_YEAR;
         bankBalance = behaviour.getDesiredBankBalance(getAnnualGrossTotalIncome()); // Desired bank balance is used as initial value for actual bank balance
         monthlyGrossRentalIncome = 0.0;
+        
+        //GC:
+        Bankrupt = false;
+        IncomeBoost = false;
+        targetHouseQuality = -1; // the initial dummy value
+        //GC: end
     }
 
     //-------------------//
@@ -81,13 +97,58 @@ public class Household implements IHouseOwner {
     public void step() {
         isBankrupt = false; // Delete bankruptcies from previous time step
         age += 1.0/config.constants.MONTHS_IN_YEAR;
+        
+        // GC: update income percentile
+        double rnd = this.prng.nextDouble();
+        // Loss of income
+		if (rnd < 0.05 && Bankrupt == false && IncomeBoost == false)
+		{
+			incomePercentileTrue = incomePercentile;
+			incomePercentile = 0.01; 
+			moBankrupt = 0;
+			Bankrupt = true;
+		} 
+		// Boost in income
+		if (rnd > 0.95 && IncomeBoost == false && Bankrupt == false && incomePercentile <= 0.90)
+		{
+			incomePercentileTrue = incomePercentile;
+			incomePercentile = 0.90; 
+			moBankrupt = 0;
+			IncomeBoost = true;
+		} 
+		if (Bankrupt == true || IncomeBoost == true)
+		{
+			moBankrupt += 1;
+		}
+		if ( moBankrupt == 24 && (Bankrupt == true || IncomeBoost == true)) 
+		{
+			incomePercentile = incomePercentileTrue;
+			moBankrupt = 0;
+			Bankrupt = false;
+			IncomeBoost = false;
+		}
+		//GC: end GC
+		
+        
         // Update annual and monthly gross employment income
         annualGrossEmploymentIncome = data.EmploymentIncome.getAnnualGrossEmploymentIncome(age, incomePercentile);
         monthlyGrossEmploymentIncome = annualGrossEmploymentIncome/config.constants.MONTHS_IN_YEAR;
+        
+        
+        //System.out.println("***");
+        //System.out.println("Cons: " + behaviour.getDesiredConsumption(getBankBalance(), getAnnualGrossTotalIncome()));
+        //System.out.println("Mo y: " + monthlyGrossEmploymentIncome);
+        //System.out.println("Bank: " + bankBalance);
+        
+        
         // Add monthly disposable income (net total income minus essential consumption and housing expenses) to bank balance
+        // GC: check variability
         bankBalance += getMonthlyDisposableIncome();
         // Consume based on monthly disposable income (after essential consumption and house payments have been subtracted)
         bankBalance -= behaviour.getDesiredConsumption(getBankBalance(), getAnnualGrossTotalIncome()); // Old implementation: if(isFirstTimeBuyer() || !isInSocialHousing()) bankBalance -= behaviour.getDesiredConsumption(getBankBalance(), getAnnualGrossTotalIncome());
+        
+
+        
         // Deal with bankruptcies
         // TODO: Improve bankruptcy procedures (currently, simple cash injection), such as terminating contracts!
         if (bankBalance < 0.0) {
@@ -195,16 +256,32 @@ public class Household implements IHouseOwner {
         double newPrice;
         
         forSale = house.getSaleRecord();
+        
+        
         if(forSale != null) { // reprice house for sale
-            newPrice = behaviour.rethinkHouseSalePrice(forSale);
-            if(newPrice > mortgageFor(house).principal) {
-                Model.houseSaleMarket.updateOffer(forSale, newPrice);
-            } else {
-                Model.houseSaleMarket.removeOffer(forSale);
-                // TODO: Is first condition redundant?
-                if(house  != home && house.resident == null) {
-                    Model.houseRentalMarket.offer(house, buyToLetRent(house), false);
-                }
+        	
+        	//GC: new stuff
+        	//int deltaT = Model.t - forSale.gettInitialListing();
+            //if(deltaT > 36)
+            if(false)
+        	{
+            	Model.houseSaleMarket.removeOffer(forSale);
+            } 
+            //GC: end new stuff
+            else {
+        	
+        	
+	            newPrice = behaviour.rethinkHouseSalePrice(forSale);
+	            if(newPrice > mortgageFor(house).principal) {
+	                Model.houseSaleMarket.updateOffer(forSale, newPrice);
+	            } else {
+	                Model.houseSaleMarket.removeOffer(forSale);
+	                // TODO: Is first condition redundant?
+	                if(house  != home && house.resident == null) {
+	                    Model.houseRentalMarket.offer(house, buyToLetRent(house), false);
+	                }
+	            }
+	            
             }
         } else if(decideToSellHouse(house)) { // put house on market?
             if(house.isOnRentalMarket()) Model.houseRentalMarket.removeOffer(house.getRentalRecord());
@@ -225,16 +302,20 @@ public class Household implements IHouseOwner {
      ******************************************************/
     private void putHouseForSale(House h) {
         double principal;
+        //GC: ADDED
+        double pricePaid;
         MortgageAgreement mortgage = mortgageFor(h);
         if(mortgage != null) {
             principal = mortgage.principal;
+            pricePaid = mortgage.purchasePrice;
         } else {
             principal = 0.0;
+            pricePaid = 0.0;
         }
         if (h == home) {
-            Model.houseSaleMarket.offer(h, behaviour.getInitialSalePrice(h.getQuality(), principal), false);
+            Model.houseSaleMarket.offer(h, behaviour.getInitialSalePrice(h.getQuality(), principal, pricePaid), false);
         } else {
-            Model.houseSaleMarket.offer(h, behaviour.getInitialSalePrice(h.getQuality(), principal), true);
+            Model.houseSaleMarket.offer(h, behaviour.getInitialSalePrice(h.getQuality(), principal, pricePaid), true);
         }
     }
 
@@ -404,7 +485,7 @@ public class Household implements IHouseOwner {
         // Record the bid on householdStats for counting the number of bids above exponential moving average sale price
         Model.householdStats.countNonBTLBidsAboveExpAvSalePrice(price);
         // Compare costs to decide whether to buy or rent...
-        if (behaviour.decideRentOrPurchase(this, price)) {
+        if (behaviour.decideRentOrPurchase(this, price) && price > 0) {
             // ... if buying, bid in the house sale market for the capped desired price
             Model.houseSaleMarket.bid(this, price);
         } else {
@@ -575,7 +656,7 @@ public class Household implements IHouseOwner {
 
     public boolean isBankrupt() { return isBankrupt; }
 
-    public double getBankBalance() { return bankBalance; }
+    public double getBankBalance() { return bankBalance; } // ***
 
     public House getHome() { return home; }
 

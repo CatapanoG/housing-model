@@ -1,6 +1,7 @@
 package collectors;
 
 import housing.*;
+import utilities.PriorityQueue2D;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
@@ -42,7 +43,7 @@ public class HousingMarketStats extends CollectorBase {
 	private double                  sumSoldPriceCount; // Dummy counter
 	private double                  sumDaysOnMarketCount; // Dummy counter
 	private double []               sumSalePricePerQualityCount; // Dummy counter
-	private int []                  nSalesPerQualityCount; // Dummy counter
+	private int []                  nSalesPerQualityCount; // Dummy counter 
 
 	// Variables computed after market clearing to keep the previous values during the clearing
 	private int                     nSales; // Number of sales
@@ -55,6 +56,15 @@ public class HousingMarketStats extends CollectorBase {
 	private double                  sumDaysOnMarket; // Sum of the number of days on the market for properties sold this month
 	private double []               sumSalePricePerQuality; // Sum of the price for each quality band for properties sold this month
 	private int []                  nSalesPerQuality; // Number of sales for each quality band for properties sold this month
+	//GC:
+	private double []				sumSalePricePerQualityPrev; // Dummy counter, previous month
+	private int []					nSalesPerQualityPrev; // Dummy counter, previous month
+	private int []                  nSaleOffersPerQualityQuartile;
+	private double []               minSaleOffersPerQualityQuartile;
+	private double []               maxSaleOffersPerQualityQuartile;
+	private double []               avgSaleOffersPerQualityQuartile;
+	private int []                  nBuyOffersPerQualityQuartile;
+	private double []               avgBuyOffersPerQualityQuartile;
 
 	// Other variables computed after market clearing
 	private double                  expAvDaysOnMarket; // Exponential moving average of the number of days on the market
@@ -111,7 +121,33 @@ public class HousingMarketStats extends CollectorBase {
         sumDaysOnMarket = 0;
         sumSalePricePerQuality = new double[config.N_QUALITY];
         nSalesPerQuality = new int[config.N_QUALITY];
-
+        //GC:
+        sumSalePricePerQualityPrev = new double[config.N_QUALITY];
+        nSalesPerQualityPrev = new int[config.N_QUALITY];
+        for(int i = 0; i < config.N_QUALITY; i++)
+        {
+        	sumSalePricePerQualityPrev[i] = 0;
+        	nSalesPerQualityPrev[i] = 0;
+        }
+        nSaleOffersPerQualityQuartile = new int[4];
+        minSaleOffersPerQualityQuartile = new double[4];
+        maxSaleOffersPerQualityQuartile = new double[4];
+        avgSaleOffersPerQualityQuartile = new double[4];
+        
+        nBuyOffersPerQualityQuartile = new int[4]; 
+        avgBuyOffersPerQualityQuartile = new double[4];
+        for(int i = 0; i < 4; i++)
+        {
+        	nSaleOffersPerQualityQuartile[i] = 0;
+        	minSaleOffersPerQualityQuartile[i] = 1000000000000.0;
+        	maxSaleOffersPerQualityQuartile[i] = -1.0;
+        	avgSaleOffersPerQualityQuartile[i] = 0;
+        	
+        	nBuyOffersPerQualityQuartile[i] = 0;
+        	avgBuyOffersPerQualityQuartile[i] = 0;
+        }
+        //GC: end
+        
         // Set initial values for other variables computed after market clearing
         expAvDaysOnMarket = config.constants.DAYS_IN_MONTH; // TODO: Make this initialisation explicit in the paper! Is 30 days similar to the final simulated value?
         expAvSalePricePerQuality = new double[config.N_QUALITY];
@@ -136,6 +172,26 @@ public class HousingMarketStats extends CollectorBase {
         sumSoldReferencePriceCount = 0;
         sumSoldPriceCount = 0;
         sumDaysOnMarketCount = 0;
+        //GC:
+        for(int i = 0; i < config.N_QUALITY; i++)
+        {
+        	if ( nSalesPerQuality[i] > 0 )
+        	{
+            	sumSalePricePerQualityPrev[i] = sumSalePricePerQuality[i];
+            	nSalesPerQualityPrev[i] = nSalesPerQuality[i];
+        	}
+        }
+        for(int i = 0; i < 4; i++)
+        {
+        	nSaleOffersPerQualityQuartile[i] = 0;
+        	minSaleOffersPerQualityQuartile[i] = 1000000000000.0;;
+        	maxSaleOffersPerQualityQuartile[i] = -1.0;
+        	avgSaleOffersPerQualityQuartile[i] = 0;
+        	
+        	nBuyOffersPerQualityQuartile[i] = 0;
+        	avgBuyOffersPerQualityQuartile[i] = 0;
+        }
+        //GC: end
         sumSalePricePerQualityCount = new double[config.N_QUALITY];
         nSalesPerQualityCount = new int[config.N_QUALITY];
 
@@ -174,6 +230,8 @@ public class HousingMarketStats extends CollectorBase {
             sumBidPrices += bid.getPrice();
             bidPrices[i] = bid.getPrice();
             ++i;
+            //GC: (for debugging purposes)
+            //if (bid.getPrice() < 0) System.out.println(bid.getPrice() + " " + bid.getQuality() + " " + bid.getBidder().id + " " + bid.getBidder().targetHouseQuality + " " + bid.getBidder().behaviour.isPropertyInvestor());
         }
 
         // Record offer prices, their average, and the number of empty and new houses
@@ -183,6 +241,62 @@ public class HousingMarketStats extends CollectorBase {
             offerPrices[i] = sale.getPrice();
             ++i;
         }
+        
+        
+        // GC: start
+        // Record num of offers
+        for(HousingMarketRecord element : market.getOffersPQ())
+        {
+        	HouseOfferRecord offer = (HouseOfferRecord)element;
+        	double price = offer.getPrice();
+        	int QualityQuartile = (int)(((double)offer.getQuality()/(double)config.N_QUALITY)*4);
+        	
+        	// increase counter
+        	nSaleOffersPerQualityQuartile[QualityQuartile]++;
+        	
+        	// update temp min 
+        	if (price < minSaleOffersPerQualityQuartile[QualityQuartile])  		
+        	{
+        		minSaleOffersPerQualityQuartile[QualityQuartile] = price;
+        		//System.out.println(minSaleOffersPerQualityQuartile[QualityQuartile]);
+        	}
+        	
+        	// update temp max
+        	if (price > maxSaleOffersPerQualityQuartile[QualityQuartile])  		
+        	{
+        		maxSaleOffersPerQualityQuartile[QualityQuartile] = price;
+        	}
+        	
+        	// update temp avg
+        	avgSaleOffersPerQualityQuartile[QualityQuartile] += price;
+        }
+        // compute avg
+        for(i = 0; i < 4; i++)
+        {
+        	avgSaleOffersPerQualityQuartile[i] /= (double)nSaleOffersPerQualityQuartile[i];
+        	//System.out.println(nSaleOffersPerQualityQuartile[i]);
+        }        
+        
+        /*
+        for(HouseBidderRecord bid : market.getBids())
+        {
+        	double price = bid.getPrice();
+        	int QualityQuartile = (int)(((double)bid.getQuality()/(double)config.N_QUALITY)*4);
+
+        	// increase counter
+        	nBuyOffersPerQualityQuartile[QualityQuartile]++;
+        	
+        	// update temp avg
+        	avgBuyOffersPerQualityQuartile[QualityQuartile] += price;
+        }
+        // compute avg
+        for(i = 0; i < 4; i++)
+        {
+        	avgBuyOffersPerQualityQuartile[i] /= (double)nBuyOffersPerQualityQuartile[i];
+        	//System.out.println(nSaleOffersPerQualityQuartile[i]);
+        } 
+        */
+        // GC: end
     }
 
     //----- During-market-clearing methods -----//
@@ -320,28 +434,28 @@ public class HousingMarketStats extends CollectorBase {
     public double getReferencePriceForQuality(int quality) { return referencePricePerQuality[quality]; }
 
     // Getters for variables computed before market clearing
-    int getnBuyers() { return nBuyers; }
-    int getnBTLBuyers() { return nBTLBuyers; }
-    int getnSellers() { return nSellers; }
-    int getnNewSellers() { return nNewSellers; }
-    int getnBTLSellers() { return nBTLSellers; }
-    int getnUnsoldNewBuild() { return nUnsoldNewBuild; }
-    double getSumBidPrices() { return sumBidPrices; }
-    double getSumOfferPrices() { return sumOfferPrices; }
-    double [] getOfferPrices() { return offerPrices; }
-    double [] getBidPrices() { return bidPrices; }
+    public int getnBuyers() { return nBuyers; }
+    public int getnBTLBuyers() { return nBTLBuyers; }
+    public int getnSellers() { return nSellers; }
+    public int getnNewSellers() { return nNewSellers; }
+    public int getnBTLSellers() { return nBTLSellers; }
+    public int getnUnsoldNewBuild() { return nUnsoldNewBuild; }
+    public double getSumBidPrices() { return sumBidPrices; }
+    public double getSumOfferPrices() { return sumOfferPrices; }
+    public double [] getOfferPrices() { return offerPrices; }
+    public double [] getBidPrices() { return bidPrices; }
 
     // Getters for variables computed after market clearing to keep the previous values during the clearing
-    int getnSales() { return nSales; }
-    int getnFTBSales() { return nFTBSales; }
-    int getnBTLSales() { return nBTLSales; }
-    double getSumSoldReferencePrice() { return sumSoldReferencePrice; }
-    double getSumSoldPrice() { return sumSoldPrice; }
-    double getSumDaysOnMarket() { return sumDaysOnMarket; }
+    public int getnSales() { return nSales; }
+    public int getnFTBSales() { return nFTBSales; }
+    public int getnBTLSales() { return nBTLSales; }
+    public double getSumSoldReferencePrice() { return sumSoldReferencePrice; }
+    public double getSumSoldPrice() { return sumSoldPrice; }
+    public double getSumDaysOnMarket() { return sumDaysOnMarket; }
     public double [] getSumSalePricePerQuality() { return sumSalePricePerQuality; }
     double getSumSalePriceForQuality(int quality) { return sumSalePricePerQuality[quality]; }
     public int [] getnSalesPerQuality() { return nSalesPerQuality; }
-    int getnSalesForQuality(int quality) { return nSalesPerQuality[quality]; }
+    public int getnSalesForQuality(int quality) { return nSalesPerQuality[quality]; }
 
     // Getters for other variables computed after market clearing
     public double getExpAvDaysOnMarket() { return expAvDaysOnMarket; }
@@ -362,32 +476,35 @@ public class HousingMarketStats extends CollectorBase {
     public double getLongTermHPA() {return longTermHousePriceAppreciation; }
 
     // Getters for derived variables
-    double getAvBidPrice() {
+    public double getAvBidPrice() {
         if (nBuyers > 0) {
             return sumBidPrices/nBuyers;
         } else {
             return 0.0;
         }
     }
-    double getAvOfferPrice() {
+    public double getAvOfferPrice() {
         if (nSellers > 0) {
             return sumOfferPrices/nSellers;
         } else {
             return 0.0;
         }
     }
-    double getAvSalePrice() {
-        if (nSales > 0) {
-            return sumSoldPrice/nSales;
-        } else {
-            return 0.0;
+    //GC: modified by me as to get the per-quality-bucket average
+    public double getAvSalePrice() {
+    	
+    	double avPrice = 0.0;
+    	
+    	for (int q = 1; q <= 4; q++) {
+    		avPrice += getAvSalePricePerQualityQuartile(q);
         }
+    	return avPrice / 4;
     }
     // Number of monthly sales that are to first-time buyers
-    int getnSalesToFTB() { return nFTBSales; }
+    public int getnSalesToFTB() { return nFTBSales; }
     // Number of monthly sales that are to buy-to-let investors
-    int getnSalesToBTL() { return nBTLSales; }
-    double getAvDaysOnMarket() {
+    public int getnSalesToBTL() { return nBTLSales; }
+    public double getAvDaysOnMarket() {
         if (nSales > 0) {
             return sumDaysOnMarket/nSales;
         } else {
@@ -413,6 +530,107 @@ public class HousingMarketStats extends CollectorBase {
             return 0.0;
         }
     }
+    
+    //GC:
+    public double getAvSalePricePerQualityQuartile(int quartile)
+    {
+    	// GC:
+    	/*
+    	int quartSize = (int)(config.N_QUALITY / 4);
+    	int quartSizeCounter = 0;
+    	int startQualityBucket = (quartile - 1)*quartSize;
+    	int endQualityBucket = (quartile)*quartSize - 1;
+    	double returnVal = 0.0;
+    	for (int q = startQualityBucket; q <= endQualityBucket; q++ )
+    	{
+            if (nSalesPerQuality[q] > 0) {
+                returnVal += sumSalePricePerQuality[q]/nSalesPerQuality[q];
+                quartSizeCounter++;                
+            } 
+    	}
+    	
+    	if (quartSizeCounter > 0)
+    	{
+    		returnVal /= quartSizeCounter;
+    	} else {
+    		returnVal = 0.0;
+    	}
+    	   	
+    	return returnVal;
+    	*/
+    	int quartSize = (int)((double)config.N_QUALITY / (double)4);
+    	int quartSizeCounter = 0;
+    	int startQualityBucket = (quartile - 1)*quartSize;
+    	int endQualityBucket = (quartile)*quartSize - 1;
+    	double returnVal = 0.0;
+    	for (int q = startQualityBucket; q <= endQualityBucket; q++ )
+    	{
+            if (nSalesPerQuality[q] > 0) {
+                returnVal += sumSalePricePerQuality[q]/nSalesPerQuality[q];
+                //quartSizeCounter++;                
+            } else {
+            	//System.out.println(sumSalePricePerQualityPrev[q]);  
+            	returnVal += sumSalePricePerQualityPrev[q]/nSalesPerQualityPrev[q];
+            }
+            quartSizeCounter++;
+    	}
+    	//System.out.println(returnVal/quartSizeCounter);
+    	return returnVal/quartSizeCounter;
+    }
+    
+    // GC:
+    public double getNSalesPerQualityQuartile(int quartile)
+    {
+    	// GC:
+    	int quartSize = (int)((double)config.N_QUALITY / (double)4);
+    	int startQualityBucket = (quartile - 1)*quartSize;
+    	int endQualityBucket = (quartile)*quartSize - 1;
+    	double returnVal = 0.0;
+    	for (int q = startQualityBucket; q <= endQualityBucket; q++ )
+    	{
+            if (nSalesPerQuality[q] > 0) {
+                returnVal += nSalesPerQuality[q];               
+            } 
+    	}    	
+    	return returnVal;
+    }
+    
+    // GC:
+    public int getNSaleOffersPerQualityQuartile(int quartile)
+    {
+    	return nSaleOffersPerQualityQuartile[quartile - 1];
+    }
+
+    // GC:
+    public double getMinOfferPerQualityQuartile(int quartile)
+    {
+    	return minSaleOffersPerQualityQuartile[quartile - 1];
+    }
+    
+    // GC:
+    public double getMaxOfferPerQualityQuartile(int quartile)
+    {
+    	return maxSaleOffersPerQualityQuartile[quartile - 1];
+    }
+    
+    // GC:
+    public double getAvgOfferPerQualityQuartile(int quartile)
+    {
+    	return avgSaleOffersPerQualityQuartile[quartile - 1];
+    }
+    
+    // GC:    
+    public int getNBuyOffersPerQualityQuartile(int quartile)
+    {
+    	return nBuyOffersPerQualityQuartile[quartile - 1];
+    }
+    
+    // GC:
+    public double getAvgBidPerQualityQuartile(int quartile)
+    {
+    	return avgBuyOffersPerQualityQuartile[quartile - 1];
+    }
+    
     /**
      * Computes the best quality of house that a buyer could expect to get for a given price. If return value is -1,
      * the buyer can't afford even lowest quality house.

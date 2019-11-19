@@ -1,5 +1,6 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
+import numpy as np
 from py4j.java_gateway import JavaGateway
 
 # connect to the JVM

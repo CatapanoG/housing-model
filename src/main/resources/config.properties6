@@ -1,0 +1,803 @@
+# Configuration file where all parameter values are set
+# All parameters in this file must be declared in the config.properties file in order to be recognised and correctly read
+
+##################################################
+################ General comments ################
+##################################################
+
+# Seed for random number generation is set by calling the program with argument
+# "-seed <your_seed>", where <your_seed> must be a positive integer. In the
+# absence of this argument, seed is set from machine time
+
+##################################################
+######## General model control parameters ########
+##################################################
+
+# Seed for random number generator (int)
+SEED = 1
+
+
+# Simulation duration in time steps (int)
+#N_STEPS = 6000
+#In the paper they use 2940 but the config file was set at 6000
+#N_STEPS = 2940
+# To uniform with the data we observe and test:
+#N_STEPS = 2557
+N_STEPS = 500
+
+# Time steps before recording statistics, initialisation time (int)
+#TIME_TO_START_RECORDING = 2400
+TIME_TO_START_RECORDING = 0
+
+# Number of simulations to run (int)
+N_SIMS = 1
+
+
+# True to write time series for each core indicator (boolean)
+recordCoreIndicators = false
+
+
+# True to write micro data for each transaction made (boolean)
+recordMicroData = false
+
+##################################################
+################ House parameters ################
+##################################################
+
+# Number of quality bands for houses (int)
+# GC: OBSERVED: NO
+# GC: ACTION: UNCHANGED
+N_QUALITY = 48
+
+##################################################
+########### Housing market parameters ############
+##################################################
+
+# Time, in days, that a house remains under offer (int)
+# GC: MEANING: NOT CLEAR, even in the code is not explained. AC comments that is not explained.
+# GC: OBSERVED: NO
+# GC: ACTION: UNCHANGED
+# GC: ORIGINAL: 0.25
+# GC: ALGO CALIBRATE: MAYBE
+DAYS_UNDER_OFFER = 7
+
+
+# Smallest proportional increase in price that can cause a gazump (increase in price) (double)
+# GC: MEANING: if there are >1 offers increase the ask price.
+# GC: OBSERVED: NO
+# GC: ACTION: VM said in Italy doesn't happen... Setting it at 1 so it is not an active mechanism.
+# GC: ORIGINAL: 1.0075
+# GC: ALGO CALIBRATE: NO
+BIDUP = 1.00
+
+
+# Decay constant for the exponential moving average of sale prices (double)
+# GC: MEANING: Factor that 'smooths' the current price distro per quality type to the initial one (the one in the obs data).
+# GC: OBSERVED: NO
+# GC: ACTION: UNCHANGED.
+# GC: ORIGINAL: 0.25
+# GC: ALGO CALIBRATE: YES
+MARKET_AVERAGE_PRICE_DECAY = 0.25
+
+
+# Initial housing price index, HPI (double)
+# TODO: Reference for this value and justification for this discounting are needed! (the parameter is declared, but no source nor justification is given)
+# GC: MEANING: Multiplies initial house prices by this factor. Seems unnecessary.
+# GC: OBSERVED: NO
+# GC: ACTION: Set it at 1.00.
+# GC: ORIGINAL: 0.8
+# GC: ALGO CALIBRATE: NO
+INITIAL_HPI = 1.00
+
+
+
+# Median house price (double)
+# TODO: Replace by the 2011 value
+# GC: MEANING: Used to setup reference prices.
+# GC: OBSERVED: Yes
+# GC: ACTION: Substitute with the Italian data point. Used the per sqm price * 100. 185899.5127
+# GC: ORIGINAL: 195000.0
+# GC: ALGO CALIBRATE: NO
+HPI_MEDIAN = 185899.5127
+
+
+# Shape parameter for the log-normal distribution of housing prices, taken from the ONS (2013) house price index data tables, table 34 (double)
+# TODO: Replace by the 2011 value, compare with Land Registry Paid Price data and decide whether to use real distribution
+# GC: MEANING: Used to setup reference prices.
+# GC: OBSERVED: Yes
+# GC: ACTION: Substitute with the Italian data point. Used the per sqm price * 100. 0.468458798459145
+# GC: ORIGINAL: 0.555
+# GC: ALGO CALIBRATE: NO
+HPI_SHAPE = 0.468
+
+
+# Profit margin for buy-to-let investors (double)
+# Yield on rent had average 6% between 2009/01 and 2015/01, minimum in 2009/10 maximum in 2012/04 peak-to-peak amplitude of 0.4%. Source: Bank of England, unpublished analysis based on Zoopla/Land Registry matching (Philippe Bracke)
+# GC: MEANING: Used by agents to evaluate properties. (check ???)
+# GC: OBSERVED: Yes
+# GC: ACTION: Substitute with the Italian data point. 
+# GC: ORIGINAL: 0.05
+# GC: ALGO CALIBRATE: NO
+RENT_GROSS_YIELD = 0.04214540920699
+
+
+##################################################
+############# Demographic parameters #############
+##################################################
+
+# Target number of households (int)
+# GC: MEANING: Target number of agents in the simulation.
+# GC: OBSERVED: NA
+# GC: ACTION: UNCHANGED. 
+# GC: ORIGINAL: 10000
+# GC: ALGO CALIBRATE: NO
+TARGET_POPULATION = 10000
+
+
+# Future birth rate (births per year per capita), calibrated with flux of FTBs, 
+# Council of Mortgage Lenders Regulated Mortgage Survey, 2015 (double).
+# TODO: Also described as "calibrated against average advances to first time buyers, core indicators 1987-2006". 
+# Check which explanation holds and replace by the 2011 value.
+# GC: MEANING: NEVER USED AFTER INITIALISATION
+# GC: OBSERVED: NA
+# GC: ACTION: UNCHANGED. 
+# GC: ORIGINAL: 0.018
+# GC: ALGO CALIBRATE: MAYBE
+FUTURE_BIRTH_RATE = 0.018
+
+
+##################################################
+############## Household parameters ##############
+##################################################
+
+# Monthly percentage growth of financial investments (double)
+# GC: MEANING: *Monthly* return on financial wealth. Compounds the current account balance.
+# GC: MEANING: Since it is wealth that can be liquidated without loss it must be a liquid investment. Hence I link it to short term govt bonds.
+# GC: OBSERVED: Yes. (kind of, as the model hardly maps to real world).
+# GC: ACTION: ASK FF FOR AN AVERAGE 1YRS GOVT BOND. - ATM SET AT 2% YEARLY.
+# GC: ORIGINAL: 0.002 (about 2.4%/year)
+# GC: ALGO CALIBRATE: - Not sure
+RETURN_ON_FINANCIAL_WEALTH = 0.00167
+
+
+# Average number of months a tenant will stay in a rented house (int)
+# Source: ARLA - Members survey of the Private Rented Sector Q4 2013
+# GC: MEANING: This is the length of the tenancy agreement. 
+# GC: MEANING: The renting houseld only ends the tenancy once it's renting agreement is expired.
+# GC: OBSERVED: YES.
+# GC: ACTION: Substitute with the Italian data point. (12 years).
+# GC: ORIGINAL: 18
+# GC: ALGO CALIBRATE: NO.
+TENANCY_LENGTH_AVERAGE = 144
+
+
+# Standard deviation of the noise in determining the tenancy length (int)
+# GC: MEANING: This is the cross-sectional variation in tenancy length 
+# GC: OBSERVED: No. But we know that the time series variability is very low.
+# GC: ACTION: Substitute with the Italian data point. (12 years).
+# GC: ORIGINAL: 6
+# GC: ALGO CALIBRATE: NO. Maybe sensitivity.
+TENANCY_LENGTH_EPSILON = 24
+
+##################################################
+######### Household behaviour parameters #########
+##################################################
+
+############# Buy-To-Let parameters ##############
+# Prior probability of being (wanting to be) a BTL investor (double)
+# TODO: Shouldn't this be 4% according to the article?
+# GC: MEANING: Prob of having the BTL gene.
+# GC: OBSERVED: YES.
+# GC: ACTION: Substitute with the Italian data point.
+# GC: ORIGINAL: 0.16
+# GC: ALGO CALIBRATE: NO.
+P_INVESTOR = 0.02
+
+
+# Minimum income percentile for a household to be a BTL investor (double)
+# GC: MEANING: ^^
+# GC: OBSERVED: YES.
+# GC: ACTION: Substitute with the Italian data point.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: NO.
+MIN_INVESTOR_PERCENTILE = 0.85
+
+
+# Weight that fundamentalists put on cap gain (double)
+# GC: MEANING: BTL households weight on capital gain in their choises IF fundamentalists.  
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: YES.
+FUNDAMENTALIST_CAP_GAIN_COEFF = 0.5
+
+
+# Weight that trend-followers put on cap gain (double)
+# GC: MEANING: BTL households weight on capital gain in their choises IF chartists.  
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.9
+# GC: ALGO CALIBRATE: YES.
+TREND_CAP_GAIN_COEFF = 0.9
+
+
+# Probability that a BTL investor is a fundamentalist versus a trend-follower (double)
+# GC: MEANING: ^^^
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: YES.
+P_FUNDAMENTALIST = 0.5
+
+
+# Chooses between two possible equations for BTL investors to make their buy/sell decisions (boolean)
+# GC: MEANING: ^^^
+# GC: OBSERVED: NO.
+# GC: ACTION: UNCHANGED.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: YES.
+BTL_YIELD_SCALING = false
+
+
+################ Rent parameters #################
+# Desired proportion of income to be spent on rent (double)
+# GC: MEANING: This is the maximum an household is willing to spend to rent a house.
+# GC: OBSERVED: NO. (That's the desired fraction, not the observed one. Obs could be >< as it depends on mkt conditions).
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.33
+# GC: ALGO CALIBRATE: YES.
+DESIRED_RENT_INCOME_FRACTION = 0.33
+
+
+# Annual psychological cost of renting (double)
+# TODO: This value comes from 1.1/12.0... Where does that come from?
+# GC: MEANING: 'Utility funct cost' of renting compared to buying a house.
+# GC: OBSERVED: NO. 
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.0916666666667
+# GC: ALGO CALIBRATE: YES.
+PSYCHOLOGICAL_COST_OF_RENTING = 0.0916666666667
+
+
+# Sensitivity parameter of the decision between buying and renting (double)
+# TODO: This value comes from 1.0/3500.0... Where does that come from?
+# GC: MEANING: 'Sensitivity' to the choice of renting compared to buying a house. 
+# GC: MEANING: Multiplies the argument in the logistic function for this choice. The higher the easier to switch from one to the other.
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.000285714285714
+# GC: ALGO CALIBRATE: YES.
+SENSITIVITY_RENT_OR_PURCHASE = 0.000285714285714
+
+
+############### General parameters ###############
+# If the ratio between the buyer's bank balance and the house price is above this,
+# payment will be made fully in cash (double)
+# Calibrated against mortgage approval/housing transaction ratio, core indicators average 1987-2006
+# TODO: Find these sources and clarify this calibration!
+# GC: MEANING: If cash on account > param * house price => buy with cash
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 2.0
+# GC: ALGO CALIBRATE: YES.
+BANK_BALANCE_FOR_CASH_DOWNPAYMENT = 2.0
+
+
+# Dampening or multiplier factor, depending on its value being <1 or >1, for the current trend when computing expectations as in
+# HPI(t+DT) = HPI(t) + FACTOR*DT*dHPI/dt (double)
+# TODO: According to John Muellbauer, this is a dampening factor (<1). Find a reference for this!
+# GC: MEANING: Expected house price appeciation multiplicative factor.
+# GC: MEANING: Ret(t+1) = AvgRet(t,t-1,...,t-HPA_YEARS_TO_CHECK)*HPA_EXPECTATION_FACTOR
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: YES.
+HPA_EXPECTATION_FACTOR = 0.5
+
+
+# Number of years of the HPI record to check when computing the annual HPA, i.e., how much backward looking households are (int)
+# GC: MEANING: Num years households consider to compute the expected future house price appreciation.
+# GC: MEANING: Ret(t+1) = AvgRet(t,t-1,...,t-HPA_YEARS_TO_CHECK)*HPA_EXPECTATION_FACTOR
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 1
+# GC: ALGO CALIBRATE: YES.
+HPA_YEARS_TO_CHECK = 1
+
+
+# Average period, in years, for which owner-occupiers hold their houses (double)
+# British housing survey 2008
+# GC: MEANING: Used as a condition for the probability to sell if OO.
+# GC: OBSERVED: YES.
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 11.0
+# GC: ALGO CALIBRATE: NO
+HOLD_PERIOD = 25.0
+
+######### Sale price reduction parameters ########
+# This subsection was calibrated against Zoopla data at the BoE
+# Monthly probability of reducing the price of a house on the market (double)
+# This value comes from 1.0-0.945
+# GC: MEANING: ^^ (a probability [0,1])
+# GC: OBSERVED: YES. - short time period
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 0.055
+# GC: ALGO CALIBRATE: NO
+P_SALE_PRICE_REDUCE = 0.08978205185
+
+
+# Mean percentage reduction for prices of houses on the market (double)
+# GC: MEANING: ^^ (percentage [0,100])
+# GC: OBSERVED: YES. - short time period
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 1.603
+# GC: ALGO CALIBRATE: NO
+REDUCTION_MU = 4.999173509
+
+
+# Standard deviation of percentage reductions for prices of houses on the market (double)
+# GC: MEANING: ^^ (percentage [0,100])
+# GC: OBSERVED: YES. - short time period
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 0.617
+# GC: ALGO CALIBRATE: NO
+REDUCTION_SIGMA = 6.930259227
+
+############# Comsumption parameters #############
+# Fraction of the monthly budget allocated for consumption, being the monthly
+# budget equal to the bank balance minus the minimum desired bank balance (double)
+# GC: MEANING: ^^ (prob [0,1])
+# GC: OBSERVED: YES.
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 0.5
+# GC: ALGO CALIBRATE: NO
+CONSUMPTION_FRACTION = 0.792
+
+
+# Fraction of Government support representing the amount necessarily spent monthly by
+# all households as essential consumption (double)
+# GC: MEANING: ^^ (prob [0,1])
+# GC: OBSERVED: YES.
+# GC: ACTION: We are using net income, so we don't care about redistributive effects of fiscal policies.
+# GC: ORIGINAL: 0.8
+# GC: ALGO CALIBRATE: NO
+ESSENTIAL_CONSUMPTION_FRACTION = 0.0
+
+
+######### Initial sale price parameters ##########
+# Initial markup over average price of same quality houses (double)
+# TODO: Note says that, according to BoE calibration, this should be around 0.2. Check and solve this!
+# GC: MEANING: ^^
+# GC: OBSERVED: YES.
+# GC: ACTION: Substitute with Italian data.
+# GC: ORIGINAL: 0.04
+# GC: ALGO CALIBRATE: NO
+SALE_MARKUP = 0.133 
+
+
+# Weight of the days-on-market effect (double)
+# GC: MEANING: This reduces the initial sale price according to the expected number of days a house stays on the market.
+# GC: MEANING: In Italy we observed an initial increase in SALE_MARKUP in periods of increased avg time on the market. Corr: 79%.
+# GC: MEANING: It is a theoretical effect, not observable (I think).
+# GC: OBSERVED: NO.
+# GC: ACTION: Given that we don't observe this param and there's a param that reduces the sale price each month (REDUCTION_MU, REDUCTION_SIGMA, P_SALE_PRICE_REDUCE), I set this at 0.
+# GC: ORIGINAL: 0.011
+# GC: ALGO CALIBRATE: NO
+SALE_WEIGHT_DAYS_ON_MARKET = 0.0
+
+
+# Standard deviation of the noise (double)
+# GC: MEANING: Dispersion of the initial price offering.
+# GC: OBSERVED: YES.
+# GC: ACTION: Ask for Italian data.
+# GC: ORIGINAL: 0.05
+# GC: ALGO CALIBRATE: NO
+SALE_EPSILON = 0.05
+
+
+##### Buyer's desired expenditure parameters #####
+
+# GC: Bid price(BUY_SCALE(+), BUY_WEIGHT_HPA(+), BUY_EPSILON(+))
+# GC: Households decide a budget ( BUDGET = BUY_SCALE * ANNUAL LABOUR INCOME ), 
+# GC: it is increased by : ( BUDGET * ( BUY_EPSILON ) / ( 1 - BUY_WEIGHT_HPA * Expected_house_appreciation ) )
+# GC: probably, BUY_SCALE and BUY_WEIGHT_HPA cant be both calibrated algorithmically (at the same time). 
+
+# Scale, number of annual salaries the buyer is willing to spend for buying a house (double)
+# TODO: This has been macro-calibrated against owner-occupier LTI and LTV ration, core indicators average 1987-2006. Find sources!
+# GC: MEANING: Multiple of yearly salary an household is willing to spend to buy a house.
+# GC: MEANING: This is structurally unobservable. We can observe past history of this but it is not the parameter we're after.
+# GC: MEANING: This effectively determines the price at which houses are exchanged.
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 4.5
+# GC: ALGO CALIBRATE: YES - 1 of group
+BUY_SCALE = 4.5
+
+
+# Weight given to house price appreciation when deciding how much to spend for buying a house (double)
+# GC: MEANING: This effectively determines the price at which houses are exchanged.
+# GC: MEANING: Read explanation above.
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.08
+# GC: ALGO CALIBRATE: YES - 1 of group
+BUY_WEIGHT_HPA = 0.08
+
+
+# Standard deviation of the noise (double)
+# GC: MEANING: This effectively determines the price at which houses are exchanged.
+# GC: MEANING: Read explanation above.
+# GC: OBSERVED: NO.
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 0.14
+# GC: ALGO CALIBRATE: YES - 1 of group
+BUY_EPSILON = 0.14
+
+############ Demanded rent parameters ############
+# Markup over average rent demanded for houses of the same quality (double)
+# GC: MEANING: ^^
+# GC: MEANING: This and the two params below are interlinked. Can't be calibrated algo at the same time.
+# GC: OBSERVED: YES.
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 0.00
+# GC: ALGO CALIBRATE: NO
+RENT_MARKUP = 0.054
+
+
+# Number of months on the market in an equilibrium situation (double)
+# GC: MEANING: ^^
+# GC: MEANING: This is used to reduce the initial desired yield on BTL the longer houses stay on the market.
+# GC: MEANING: This is NOT observable.
+# GC: OBSERVED: YES.
+# GC: ACTION: Push to zero the beta the render this mechanism ineffective (beta = RENT_MARKUP/REN_EQ_MONTHS_ON_MARKET)
+# GC: ORIGINAL: 6.0
+# GC: ALGO CALIBRATE: NO
+RENT_EQ_MONTHS_ON_MARKET = 1000000.0
+
+
+# Standard deviation of the noise (double)
+# GC: MEANING: **IF** initial required BTL rent yield is above the min accepted, the initial asked rent is set + this noise.
+# GC: OBSERVED: Not really...
+# GC: ACTION: Ask for data. For the time being use the original value 5%
+# GC: ORIGINAL: 0.05
+# GC: ALGO CALIBRATE: NO
+RENT_EPSILON = 0.05
+
+
+# Maximum period of time BTL investors are ready to wait to get back their investment through rents,
+# this determines the minimum rent they are ready to accept (double)
+# TODO: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Attention: This parameter and its associated mechanism are not declared in the article! Need to declare and reference!
+# GC: MEANING: Sets the minimum acceptable BTL yield = 1/(RENT_MAX_AMORTIZATION_PERIOD*12) (monthly)
+# GC: OBSERVED: NO
+# GC: ACTION: Take the Italian data on BTL avg yield, subtract 0.2% (as they did here). 1/(0.04214540920699-0.02)=24.909
+# GC: ORIGINAL: 20.833333333 => 4.8% BTL yearly yield
+# GC: ALGO CALIBRATE: NO
+# GC: remember RENT_GROSS_YIELD = 0.04214540920699
+RENT_MAX_AMORTIZATION_PERIOD = 24.909
+
+
+# Percentage reduction of demanded rent for every month the property is in the market, not rented (double)
+# GC: MEANING: ^^
+# GC: OBSERVED: YES
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 0.05
+# GC: ALGO CALIBRATE: NO
+RENT_REDUCTION = 0.04255634741
+
+
+############# Downpayment parameters #############
+
+# GC: unfortunately at BdI we don't have any data on 'downpayments'.
+# GC: the *only* data available is the average aggregated downpayment.
+# GC: I'll use the same parameters for each buyer category (OO, FTB, BTL).
+
+# GC: ACTION: All this group of parameters has been simplified to two (for which we do have data).
+# GC: PREVIOUS MECHANISM: There was a distro of downpayment for each investor type.
+# GC: PREVIOUS MECHANISM: The actual downpayment was *independent* of the house price (but for BTL investors).
+# GC: CURRENT MECHANISM: The downpayment is a percentage of the target house price + some noise.
+
+DOWNPAYMENT_MEAN = 0.332
+DOWNPAYMENT_EPSILON = 0.1
+
+# GC: BEGIN SIMPLIFICATION
+
+# Minimum income percentile to consider any downpayment, below this level, downpayment is set to 0 (double)
+# TODO: Calibrated against PSD data, need clearer reference or disclose distribution!
+# GC: MEANING: Below this income percentile, HH don't put any downpayment.
+# DOWNPAYMENT_MIN_INCOME = 30.0
+
+
+# TODO: Both functional form and parameters are micro-calibrated against BoE data. Need reference or disclose distribution!
+# Scale parameter for the log-normal distribution of downpayments by first-time-buyers (double)
+# DOWNPAYMENT_FTB_SCALE = 10.30
+
+
+# Shape parameter for the log-normal distribution of downpayments by first-time-buyers (double)
+# DOWNPAYMENT_FTB_SHAPE = 0.9093
+
+
+# Scale parameter for the log-normal distribution of downpayments by owner-occupiers (double)
+# DOWNPAYMENT_OO_SCALE = 11.155
+
+
+# Shape parameter for the log-normal distribution of downpayments by owner-occupiers (double)
+# DOWNPAYMENT_OO_SHAPE = 0.7538
+
+
+# Average downpayment, as percentage of house price, by but-to-let investors (double)
+# TODO: Said to be calibrated to match LTV ratios, but no reference is given. Need reference!
+# TODO: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Attention: Functional form slightly different to the one presented in the article
+# DOWNPAYMENT_BTL_MEAN = 0.3
+
+
+# Standard deviation of the noise (double)
+# DOWNPAYMENT_BTL_EPSILON = 0.1
+
+# GC: END SIMPLIFICATION
+
+######## Desired bank balance parameters #########
+
+# GC: The desired bank balance is used in:
+# GC: i) At init to set initial bank balances
+# GC:        in: public Household(MersenneTwister prng) {
+# GC: ii) To monthly decrease the bb if it exceeds the desired amount (non essential consumption)
+# GC:        in: double getDesiredConsumption(double bankBalance, double annualGrossTotalIncome) {
+# GC: iii) To evaluate the treshold for which a BTL household is willing to buy another house (bb > desired bb * factor)
+# GC:        in: if (me.getBankBalance() < getDesiredBankBalance(me.getAnnualGrossTotalIncome())*config.BTL_CHOICE_MIN_BANK_BALANCE) { return false; }
+# GC:
+# GC: ACTION: set the desired BankBalance = PARAM*YEARLY_INCOME 
+DESIRED_BANK_BALANCE_BETA = 4.07
+
+# GC: START SIMPLIFICATION
+
+# Micro-calibrated to match the log-normal relationship between wealth and income from the Wealth and Assets Survey
+# Log-normal function parameter (double)
+#DESIRED_BANK_BALANCE_ALPHA = -32.0013877
+# Log-normal function parameter (double)
+#DESIRED_BANK_BALANCE_BETA = 4.07
+# Standard deviation of a noise, it states a propensity to save (double)
+#DESIRED_BANK_BALANCE_EPSILON = 0.1
+
+# GC: END SIMPLIFICATION
+
+########## Selling decision parameters ###########
+
+# GC: parameters that influence the decision (probability) so sell a house
+# GC: they all enter the same functional (messy!) form and cant be all independently calibrated.
+# GC: ACTION: calibrate just one of those params!
+# GC: The meaning of each param is a bit obscure as the functional form is a bit ad-hoc...
+# GC: prob to sell = monthlyPToSell * ( 1 +
+# GC:										  + DECISION_TO_SELL_ALPHA * ( DECISION_TO_SELL_HPC - num_sell_on_mkt )
+# GC:										  + DECISION_TO_SELL_BETA  * ( DECISION_TO_SELL_INTEREST - mortgage_interest )
+# GC:									   )		 
+
+# Weight of houses per capita effect
+# GC: potentially calibrate just this guy
+DECISION_TO_SELL_ALPHA = 4.0
+# Weight of interest rate effect
+DECISION_TO_SELL_BETA = 5.0
+# TODO: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Attention: fudge parameter, explicitly explained otherwise in the article
+DECISION_TO_SELL_HPC = 0.05
+# TODO: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Attention: fudge parameter, explicitly explained otherwise in the article
+DECISION_TO_SELL_INTEREST = 0.03
+
+######### BTL buy/sell choice parameters #########
+# Shape parameter, or intensity of choice on effective yield (double)
+# GC: MEANING: BTL HH have their prob to buy&sell properties proportional to the expected yield. 
+# GC: MEANING: This factor is multiplies to the yield.
+# GC: OBSERVED: NO
+# GC: ACTION: Calibrate.
+# GC: ORIGINAL: 50.0
+# GC: ALGO CALIBRATE: YES
+BTL_CHOICE_INTENSITY = 50.0
+
+
+# Minimun bank balance, as a percentage of the desired bank balance, to buy new properties (double)
+# TODO: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Attention: This parameter and its associated mechanism are not declared in the article! Need to declare and reference!
+# GC: MEANING: BTL check if they have getDesiredBankBalance(BTL_CHOICE_MIN_BANK_BALANCE * income)
+# GC: MEANING: but there already is a param that establishes a multiple of the income for this. 
+# GC: OBSERVED: NO
+# GC: ACTION: Setting this to 1, effectively eliminating its role.
+# GC: ORIGINAL: 0.75
+# GC: ALGO CALIBRATE: NO
+BTL_CHOICE_MIN_BANK_BALANCE = 1.00
+
+
+##################################################
+################ Bank parameters #################
+##################################################
+# TODO: We need references or justification for all these values!
+
+# Mortgage duration in years (int)
+# GC: MEANING: ^^ 
+# GC: OBSERVED: YES: https://www.monitorimmobiliare.it/tecnocasa-25-anni-la-durata-media-del-mutuo-in-italia-report_20181261319 
+# GC: ACTION: Use Italian data (the same = 25)
+# GC: ORIGINAL: 25
+# GC: ALGO CALIBRATE: NO
+MORTGAGE_DURATION_YEARS = 25
+
+
+# Bank initial base-rate, which remains currently unchanged (double)
+# GC: MEANING: This is the minimum interest rate bank may charge on mortgages.
+# GC: MEANING: Rates are set in order to reach the montly BANK_CREDIT_SUPPLY_TARGET.
+# GC: OBSERVED: NO
+# GC: ACTION: UNCHANGED
+# GC: ORIGINAL: 0.005
+# GC: ALGO CALIBRATE: NO
+BANK_INITIAL_BASE_RATE = 0.005
+
+
+# Bank's target supply of credit per household per month (double)
+# GC: MEANING: supplyTarget = config.BANK_CREDIT_SUPPLY_TARGET*totalPopulation;
+# GC: OBSERVED: YES
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 380
+# GC: ALGO CALIBRATE: NO
+BANK_CREDIT_SUPPLY_TARGET = 120
+
+
+# Maximum LTV ratio that the private bank would allow for first-time-buyers (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.95
+BANK_MAX_FTB_LTV = 0.95
+
+
+# Maximum LTV ratio that the private bank would allow for owner-occupiers (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.9
+BANK_MAX_OO_LTV = 0.9
+
+
+# Maximum LTV ratio that the private bank would allow for BTL investors (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.8
+BANK_MAX_BTL_LTV = 0.8
+
+
+# Maximum LTI ratio that the private bank would allow for first-time-buyers (private bank's hard limit) (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 6.0
+BANK_MAX_FTB_LTI = 6.0
+
+
+# Maximum LTI ratio that the private bank would allow for owner-occupiers (private bank's hard limit) (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 6.0
+BANK_MAX_OO_LTI = 6.0
+
+
+##################################################
+############# Central bank parameters ############
+##################################################
+# TODO: We need references or justification for all these values! Also, need to clarify meaning of "when not regulated"
+
+# Maximum LTI ratio that the bank would allow for first-time-buyers when not regulated (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 6.0
+CENTRAL_BANK_MAX_FTB_LTI = 6.0
+
+
+# Maximum LTI ratio that the bank would allow for owner-occupiers when not regulated (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 6.0
+CENTRAL_BANK_MAX_OO_LTI = 6.0
+
+
+# Maximum fraction of mortgages that the bank can give over the LTI ratio limit (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.15
+CENTRAL_BANK_FRACTION_OVER_MAX_LTI = 0.15
+
+
+# Maximum fraction of the household's income to be spent on mortgage repayments under stressed conditions (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.5
+CENTRAL_BANK_AFFORDABILITY_COEFF = 0.5
+
+
+# Interest rate under stressed condition for BTL investors when calculating interest coverage ratios, ICR (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 0.05
+CENTRAL_BANK_BTL_STRESSED_INTEREST = 0.05
+
+
+# Interest coverage ratio (ICR) limit imposed by the central bank (double)
+# GC: POLICY PARAM 
+# GC: ORIGINAL: 1.25
+CENTRAL_BANK_MAX_ICR = 1.25
+
+
+##################################################
+############ Construction parameters #############
+##################################################
+# TODO: We need references or justification for all these values!
+
+# Target ratio of houses per household (double)
+# GC: MEANING: ^^
+# GC: OBSERVED: YES
+# GC: ACTION: Substitute with Italian data.
+# GC: ORIGINAL: 0.82
+# GC: ALGO CALIBRATE: NO.
+CONSTRUCTION_HOUSES_PER_HOUSEHOLD = 1.176674038
+
+
+##################################################
+############# Government parameters ##############
+##################################################
+
+# General personal allowance to be deducted when computing taxable income (double)
+# GC: MEANING: ^^
+# GC: OBSERVED: YES.
+# GC: ACTION: We are using net income, so we don't care about redistributive effects of fiscal policies.
+# GC: ORIGINAL: 9440.0
+# GC: ALGO CALIBRATE: NO
+GOVERNMENT_GENERAL_PERSONAL_ALLOWANCE = 0.0
+
+
+# Limit of income above which personal allowance starts to decrease £1 for every £2 of income above this limit (double)
+# GC: MEANING: ^^
+# GC: OBSERVED: YES.
+# GC: ACTION: We are using net income, so we don't care about redistributive effects of fiscal policies.
+# GC: ORIGINAL: 100000.0
+# GC: ALGO CALIBRATE: NO
+GOVERNMENT_INCOME_LIMIT_FOR_PERSONAL_ALLOWANCE = 0.0
+
+
+# Minimum monthly earnings for a married couple from income support (double)
+# TODO: We need a reference or justification for this value!
+# GC: MEANING: Its a minumum monthly transfer from the govt to families.
+# GC: MEANING: Actually it is not added to the income, just subtracted. (???)
+# GC: OBSERVED: YES.
+# GC: ACTION: We are using net income, so we don't care about redistributive effects of fiscal policies.
+# GC: ORIGINAL: 492.7
+# GC: ALGO CALIBRATE: NO
+GOVERNMENT_MONTHLY_INCOME_SUPPORT = 0.0
+
+##################################################
+############## Collectors parameters #############
+##################################################
+
+# Approximate number of households in UK, used to scale up results for core indicators (double)
+# TODO: Reference needed
+# GC: MEANING: Not used in any economic computation. It just scales up the results to the entire population.
+# GC: OBSERVED: YES.
+# GC: ACTION: Use the Italian data.
+# GC: ORIGINAL: 26.5e6
+# GC: ALGO CALIBRATE: NO
+UK_HOUSEHOLDS = 25.9e6
+
+
+# Whether to record mortgage statistics (boolean)
+MORTGAGE_DIAGNOSTICS_ACTIVE = true
+
+##################################################
+################# Data addresses #################
+##################################################
+
+############ Government data addresses ###########
+# TODO: We need clearer references for the values contained in these files! Also, current values are for 2013/2014, replace for 2011!
+# GC: MEANING: ^^^
+# GC: OBSERVED: YES.
+# GC: ACTION: We are using net income, so we don't care about redistributive effects of fiscal policies.
+# GC: ORIGINAL: original files are in the 'old uk data' folder
+# GC: ALGO CALIBRATE: NO
+DATA_TAX_RATES = "src/main/resources/TaxRates.csv"
+DATA_NATIONAL_INSURANCE_RATES = "src/main/resources/NationalInsuranceRates.csv"
+
+############ Lifecycle data addresses ############
+# GC: MEANING: ^^^
+# GC: OBSERVED: YES.
+# GC: ACTION: Substitute with Italian data.
+# GC: ORIGINAL: original files are in the 'old uk data' folder
+# GC: ALGO CALIBRATE: NO
+DATA_INCOME_GIVEN_AGE = "src/main/resources/IncomeGivenAge.csv"
+
+########### Demographics data addresses ##########
+# Target probability density of age of representative person in the household at time t=0, calibrated against LCFS (2012)
+# GC: MEANING: ^^^
+# GC: OBSERVED: YES.
+# GC: ACTION: ***UNCHANGED ATM.***
+# GC: ORIGINAL: 
+# GC: ALGO CALIBRATE: NO
+DATA_HOUSEHOLD_AGE_AT_BIRTH_PDF = "src/main/resources/HouseholdAgeAtBirthPDF.csv"
+DATA_DEATH_PROB_GIVEN_AGE = "src/main/resources/DeathProbGivenAge.csv"

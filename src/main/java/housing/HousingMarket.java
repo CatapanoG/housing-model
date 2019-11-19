@@ -120,8 +120,33 @@ public abstract class HousingMarket {
             // If buyer and seller is the same household, then the bid falls through and the household will need to
             // reissue it next month. Also, if the bid price is not enough to buy anything in this market and at this
             // time, the bid also falls through
+            
             if(offer != null && (offer.getHouse().owner != bid.getBidder())) {
-                offer.matchWith(bid);
+                
+                
+            	//GC:
+            	//a proposed mechanism to avoid buying an house of lower quality wrt the own targetHouseQuality
+                /*            
+                double rnd = prng.nextDouble();
+                
+                if (rnd < 0.70)
+                {
+                	offer.matchWith(bid);
+                	bid.getBidder().targetHouseQuality = offer.getHouse().getQuality();
+                } else {
+                    int BidQ = bid.getBidder().targetHouseQuality;
+                    int OffQ = offer.getHouse().getQuality();
+                    if (BidQ <= OffQ)
+                    {
+                    	//bid.getBidder().targetHouseQuality = offer.getHouse().getQuality();
+                    	offer.matchWith(bid);
+                    } // else {
+                    	//System.out.println("BidQ: " + BidQ + ", OffQ: " + OffQ);
+                    //}
+                }
+                */
+                // GC: previous code:
+            	offer.matchWith(bid);
             }
         }
         // To keep only matched bids, we clear the bids ArrayList, it will be refilled with unsuccessful bids when

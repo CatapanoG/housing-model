@@ -2,6 +2,7 @@ package data;
 
 import housing.Model;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -9,6 +10,7 @@ import java.util.Iterator;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.math3.random.MersenneTwister;
 
 import utilities.BinnedData;
 import utilities.BinnedDataDouble;
@@ -26,6 +28,11 @@ public class EmploymentIncome {
     //------------------//
     //----- Fields -----//
     //------------------//
+	
+	//GC:
+	//Store the income-age data:
+	static private double[][] incomeAge = loadGrossEmploymentIncomeGivenAge();
+	static public MersenneTwister prng;
 
     /***
      * Calibrated against LCFS 2012 data
@@ -35,6 +42,89 @@ public class EmploymentIncome {
     //-------------------//
     //----- Methods -----//
     //-------------------//
+    
+    /**
+     *  GC:
+     * 
+     */
+	static private double[][] loadGrossEmploymentIncomeGivenAge() {
+		
+		double[][] data = new double[112][];
+		
+		Iterator<CSVRecord> records;
+		try {
+			Reader in = new FileReader(Model.config.DATA_INCOME_GIVEN_AGE);
+			records = CSVFormat.EXCEL.withHeader().parse(in).iterator();
+			
+			CSVRecord record;
+			for(int i = 0; i < 112; i++)
+			{
+				data[i] = new double[5];
+				record = records.next();
+				
+				for(int j = 0; j < 5; j++)
+				{
+					data[i][j] = Double.parseDouble(record.get(j));
+					if (j == 2 || j == 3)
+					{
+						data[i][j] = Math.exp(data[i][j]);
+					}
+					if (j == 4 && i % 16 != 0)
+					{
+						data[i][j] += data[i-1][j];
+						if(data[i][j] >= 0.9999)
+						{
+							data[i][j] = 1;
+						}
+					}
+					//System.out.println(data[i][j]);
+				}
+			}
+		} catch (IOException e) {
+			System.out.println("Error loading data for income given age in data.EmploymentIncome");
+			e.printStackTrace();
+		}
+		
+		return data;
+	}
+	
+    /**
+     *  GC:
+     * 
+     */
+	private static double getIncomeGivenAgeAndPercentile(double _age, double _percentile)
+	{
+		double income = 0.0;
+		
+		for (int i = 0; i < incomeAge.length; i++)
+		{
+			double minAge = incomeAge[i][0];
+			double maxAge = incomeAge[i][1];
+			double percentile = incomeAge[i][4];
+			if (_age > minAge && _age <= maxAge + 1 && _percentile <= percentile)
+			{
+				double minIncome = incomeAge[i][2];
+				double maxIncome = incomeAge[i][3]; 
+				double rnd = prng.nextDouble();
+				income = minIncome + rnd * (maxIncome - minIncome);
+				
+				/*
+				double rnd = Math.random();
+				if (rnd < 0.17)
+				{
+					income *= 0.05;
+				} else if (rnd > 0.90)
+				{
+					income *= 1.95;
+				}
+				*/
+			
+				break;
+			}
+		}
+		
+		return income;
+	}
 
     /**
      * Read data from file Model.config.DATA_INCOME_GIVEN_AGE and return it as a binnedData pdf of gross employment
@@ -57,9 +147,14 @@ public class EmploymentIncome {
 		try {
 			Reader in = new FileReader(Model.config.DATA_INCOME_GIVEN_AGE);
 			records = CSVFormat.EXCEL.withHeader().parse(in).iterator();
+			
 			CSVRecord record;
 			if (records.hasNext()) {
 				record = records.next();
+				
+				//GC: how to get data:
+				//System.out.println(record.get(0));
+				
                 data.setFirstBinMin(Double.valueOf(record.get(givenMinCol)));
 			    data.setBinWidth(Double.valueOf(record.get(givenMaxCol)) - data.getSupportLowerBound());
 			    pdfBinMin = Double.valueOf(record.get(varMinCol));
@@ -101,7 +196,16 @@ public class EmploymentIncome {
             boundAge = lnIncomeGivenAge.getSupportUpperBound() - 1e-7;
         }
         // Assign gross annual income according to the determined boundAge
-        double income = Math.exp(lnIncomeGivenAge.getBinAt(boundAge).inverseCumulativeProbability(incomePercentile));
+        
+        // GC: old way to compute the income:
+        //double income = Math.exp(lnIncomeGivenAge.getBinAt(boundAge).inverseCumulativeProbability(incomePercentile));
+        //System.out.println("Age: " + boundAge + ". Perc: " + incomePercentile);
+        //System.out.println("");
+        
+        // GC: new (mine) way to compute the income:
+        double income = getIncomeGivenAgeAndPercentile(boundAge, incomePercentile);
+        //System.out.println("Age: " + boundAge + ". Perc: " + incomePercentile + " incomeNew : " + incomeZ + " incomeOld: " + income);
+        
         // Impose a minimum income equivalent to the minimum government annual income support
         if (income < Model.config.GOVERNMENT_MONTHLY_INCOME_SUPPORT*Model.config.constants.MONTHS_IN_YEAR) {
             income = Model.config.GOVERNMENT_MONTHLY_INCOME_SUPPORT*Model.config.constants.MONTHS_IN_YEAR;

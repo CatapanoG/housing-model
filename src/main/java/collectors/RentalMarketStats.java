@@ -103,6 +103,7 @@ public class RentalMarketStats extends HousingMarketStats {
 	public void recordTransaction(HouseOfferRecord sale) {
 		super.recordTransaction(sale);
 		sumMonthsOnMarketPerQualityCount[sale.getQuality()] += (Model.getTime() - sale.gettInitialListing());
+		
 	}
 
 	//----- Post-market-clearing methods -----//
