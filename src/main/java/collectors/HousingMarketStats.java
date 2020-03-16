@@ -88,6 +88,18 @@ public class HousingMarketStats extends CollectorBase {
 		setActive(true);
 		this.market = market;
 		referencePricePerQuality = new double[config.N_QUALITY];
+		
+		
+		//GC: this updates the static references in the data.HouseSaleMarket class
+		//GC: otherwise it won't update the N.QUALITY param in that class
+		data.HouseSaleMarket.updateConfigFile(config);
+		data.HouseSaleMarket.updateRefPrice();
+		
+		//System.out.println(config.N_QUALITY + " HMS constructor");
+		
+		//GC: END
+		
+		
 		System.arraycopy(data.HouseSaleMarket.getReferencePricePerQuality(), 0, referencePricePerQuality, 0,
 				config.N_QUALITY); // Copies reference prices from data/HouseSaleMarket into referencePricePerQuality
 		HPIRecord = new DescriptiveStatistics(config.derivedParams.HPI_RECORD_LENGTH);

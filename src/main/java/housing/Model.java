@@ -98,7 +98,8 @@ public class Model {
     private static double[]             RentingAnnualisedTotalIncome;
     private static double[]             HomelessAnnualisedTotalIncome;
     private static double[]             AllAnnualisedTotalIncome;
-    private static double[]             ooLTV;
+    //private static double[]             ooLTV;
+    private static double[]             ltvBorrowers;
     private static double[]             AvBidPrice;
     private static double[]             AvOfferPrice;
     private static double[]             AvSalePrice;
@@ -182,10 +183,10 @@ public class Model {
         prng = new MersenneTwister(rndSeed);
     }
     
-    public static void ModelInit()
-    {	
+    public static void ModelInit(double income_shock_prob)
+    {	    	    	
         government = new Government();
-        demographics = new Demographics(prng);
+        demographics = new Demographics(prng, income_shock_prob);
         construction = new Construction(prng);
         centralBank = new CentralBank();
         bank = new Bank();
@@ -240,7 +241,8 @@ public class Model {
         RentingAnnualisedTotalIncome = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
         HomelessAnnualisedTotalIncome = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
         AllAnnualisedTotalIncome = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
-        ooLTV = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];      
+        //ooLTV = new double[config.N_STEPS - config.TIME_TO_START_RECORDING]; 
+        ltvBorrowers = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
         AvBidPrice = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
         AvOfferPrice = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
         AvSalePrice = new double[config.N_STEPS - config.TIME_TO_START_RECORDING];
@@ -320,7 +322,16 @@ public class Model {
     		double buy_scale,
     		double desired_bank_balance_beta,
     		double decision_to_sell_alpha,
-    		double btl_choice_intensity) {
+    		double btl_choice_intensity,
+    		double buy_epsilon,
+    		double rent_epsilon,
+    		double construction_houses_per_household,
+    		double bidup,
+    		double nQuality,
+    		double buy_weight_hpa,
+    		double credit_supply_target,
+    		double consumption_fraction,
+    		double income_shock_prob) {
         // the model has about 70 parameters
 
     	System.out.println("W l'Italia");
@@ -329,6 +340,8 @@ public class Model {
         // handleInputArguments(args);
         String[] args2 = {"args"};
         handleInputArguments(args2);
+        
+        
 
         // Create an instance of Model in order to initialise it (reading config file)
         Model model = new Model(configFileName, outputFolder, rndSeed);
@@ -352,13 +365,32 @@ public class Model {
         if (desired_bank_balance_beta != -1.0) config.DESIRED_BANK_BALANCE_BETA = desired_bank_balance_beta; 
         if (decision_to_sell_alpha != -1.0) config.DECISION_TO_SELL_ALPHA = decision_to_sell_alpha;
         if (btl_choice_intensity != -1.0) config.BTL_CHOICE_INTENSITY = btl_choice_intensity;
+        if (buy_epsilon != -1.0) config.BUY_EPSILON = buy_epsilon;
+        if (rent_epsilon != -1.0) config.RENT_EPSILON = rent_epsilon;
+        if (construction_houses_per_household != -1.0) config.CONSTRUCTION_HOUSES_PER_HOUSEHOLD = construction_houses_per_household;
+        if (bidup != -1.0) config.BIDUP = bidup;
+        if (nQuality != -1.0) config.N_QUALITY = (int)nQuality;
+        if (buy_weight_hpa != -1.0) config.BUY_WEIGHT_HPA = buy_weight_hpa;
+        if (credit_supply_target != -1.0) config.BANK_CREDIT_SUPPLY_TARGET = credit_supply_target;
+        if (consumption_fraction != -1.0) config.CONSUMPTION_FRACTION = consumption_fraction;
+        
+        //System.out.println(config.N_QUALITY);
         
         config.setDerivedParams();
 
         // modify config parameters, if we received any - END
 
         // Call the was-constructor
-        ModelInit();
+        if (income_shock_prob != -1.0) 
+        {
+        	ModelInit(income_shock_prob);
+        } 
+        else 
+        {
+        	ModelInit(0.05);
+        }
+        	
+        
         
         // Start data recorders for output
         setupStatics();
@@ -425,13 +457,29 @@ public class Model {
                     nRenting[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnRenting();
                     nOwnerOccupier[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnOwnerOccupier();
                     nBTL[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnBTL();
-                    nNonBTLBankruptcies[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnNonBTLBankruptcies();
+                    
+                    // GC: commenting out the old line in which the number of defaulted households was counted
+                    // GC: now it is counted the percentage of newly NPL over the stock (number) of mortgages
+                    //nNonBTLBankruptcies[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnNonBTLBankruptcies();
+                    int nNewBankruptcies = Model.householdStats.getnNonBTLNewBakruptcies();
+                    int nMortgages = Model.creditSupply.getnRegisteredMortgages();
+                    if (nMortgages > 0)
+                    {
+                    	nNonBTLBankruptcies[t - config.TIME_TO_START_RECORDING] = (double)nNewBankruptcies / (double)nMortgages;
+                    } else {
+                    	nNonBTLBankruptcies[t - config.TIME_TO_START_RECORDING] = 0.0;
+                    }
+                    // GC: end of this change
+                    
                     nBTLBankruptcies[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnBTLBankruptcies();
                     housingStock[t - config.TIME_TO_START_RECORDING] = Model.construction.getHousingStock();
                     nNewBuild[t - config.TIME_TO_START_RECORDING] = Model.construction.getnNewBuild();
                     nEmptyHouses[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getnEmptyHouses();
                     BTLStockFraction[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getBTLStockFraction();
-                    nRegisteredMortgages[t - config.TIME_TO_START_RECORDING] = Model.creditSupply.getnRegisteredMortgages();
+                    
+                    //nRegisteredMortgages[t - config.TIME_TO_START_RECORDING] = Model.creditSupply.getnRegisteredMortgages();
+                    nRegisteredMortgages[t - config.TIME_TO_START_RECORDING] = nMortgages;
+                    
                     bankBalAll[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getbankBalAll();
                     BankBalBTL[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getBankBalBTL();
                     BankBalOO[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getBankBalOO();
@@ -442,7 +490,8 @@ public class Model {
                     RentingAnnualisedTotalIncome[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getRentingAnnualisedTotalIncome();
                     HomelessAnnualisedTotalIncome[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getHomelessAnnualisedTotalIncome();
                     AllAnnualisedTotalIncome[t - config.TIME_TO_START_RECORDING] = Model.householdStats.getAllAnnualisedTotalIncome();
-                    ooLTV[t - config.TIME_TO_START_RECORDING] = Model.coreIndicators.getOwnerOccupierLTVMean();
+                    //ooLTV[t - config.TIME_TO_START_RECORDING] = Model.coreIndicators.getOwnerOccupierLTVMean();
+                    ltvBorrowers[t - config.TIME_TO_START_RECORDING] = Model.creditSupply.ltvBorrowers;
                     AvBidPrice[t - config.TIME_TO_START_RECORDING] = Model.housingMarketStats.getAvBidPrice();
                     AvOfferPrice[t - config.TIME_TO_START_RECORDING] = Model.housingMarketStats.getAvOfferPrice();
                     AvSalePrice[t - config.TIME_TO_START_RECORDING] = Model.housingMarketStats.getAvSalePrice();
@@ -502,8 +551,11 @@ public class Model {
                 }
 
                 // Print time information to screen
-                if (t % 100 == 0) {
+                if (t % 1000 == 0) {
                     System.out.println("Simulation: " + nSimulation + ", time: " + t);
+                    // System.out.println("Num households: " + Model.households.size());
+                    // System.out.println("Housing stock size: " + Model.construction.getHousingStock());
+                    // System.out.println("\n");
                 }
             }
 
@@ -546,7 +598,8 @@ public class Model {
         results[28] = RentingAnnualisedTotalIncome;
         results[29] = HomelessAnnualisedTotalIncome;
         results[30] = AllAnnualisedTotalIncome;
-        results[31] = ooLTV;
+        //results[31] = ooLTV;
+        results[31] = ltvBorrowers;
         results[32] = AvBidPrice;
         results[33] = AvOfferPrice;
         results[34] = AvSalePrice;
@@ -640,7 +693,13 @@ public class Model {
          * with no parameter overriding.
          */
         System.out.println("GC INFO: running the simulation with default parameters");
-        exec(0, -1.0, -1.0, -1.0, -1.0, -1.0, 0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+        exec(0, -1.0, -1.0, -1.0, -1.0, -1.0, 0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+        /*
+         exec(3, 0.86208843,  0.53636958,  0.28832783,  0.18459013,  0.84369084,  6.69695561,
+        		   0.94927647,  0.21631745,  0.06957877,  1.91140531,  3.7340954,   4.8134152,
+        		   0.86745882,  0.64640578,  0.88212521,  0.20496544,  1.11780335,  1.03350607,
+        		  48.05978833,  0.41172649);
+        */
     }
 
     private static void setupStatics() {

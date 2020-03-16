@@ -23,6 +23,7 @@ public class MortgageAgreement extends PaymentAgreement {
 	
 	//GC:
 	public double			dti;
+	public double           ltv;
 
     //------------------------//
     //----- Constructors -----//

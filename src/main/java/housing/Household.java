@@ -48,6 +48,8 @@ public class Household implements IHouseOwner {
     int							moBankrupt;
     boolean 					Bankrupt;
     boolean                     IncomeBoost;
+    boolean                     wasBankrupt;
+    double                      incomeShockProb;
 
     //------------------------//
     //----- Constructors -----//
@@ -57,7 +59,7 @@ public class Household implements IHouseOwner {
      * Initialises behaviour (determine whether the household will be a BTL investor). Households start off in social
      * housing and with their "desired bank balance" in the bank
      */
-    public Household(MersenneTwister prng) {
+    public Household(MersenneTwister prng, double _incomeShockProb) {
         this.prng = prng; // Passes the Model's random number generator to a private field of each instance
         home = null;
         isFirstTimeBuyer = true;
@@ -77,6 +79,8 @@ public class Household implements IHouseOwner {
         Bankrupt = false;
         IncomeBoost = false;
         targetHouseQuality = -1; // the initial dummy value
+        wasBankrupt = false;
+        incomeShockProb = _incomeShockProb;
         //GC: end
     }
 
@@ -95,13 +99,22 @@ public class Household implements IHouseOwner {
      * - Buy/sell/rent out properties if BTL investor
      */
     public void step() {
+    	// GC: update past bankruptcy status
+    	if (isBankrupt == true)
+    	{
+    		wasBankrupt = true;
+    	} else {
+    		wasBankrupt = false;
+    	}
+    	//GC: end GC
+    	
         isBankrupt = false; // Delete bankruptcies from previous time step
         age += 1.0/config.constants.MONTHS_IN_YEAR;
         
         // GC: update income percentile
         double rnd = this.prng.nextDouble();
         // Loss of income
-		if (rnd < 0.05 && Bankrupt == false && IncomeBoost == false)
+		if (rnd < incomeShockProb && Bankrupt == false && IncomeBoost == false)
 		{
 			incomePercentileTrue = incomePercentile;
 			incomePercentile = 0.01; 
@@ -109,7 +122,7 @@ public class Household implements IHouseOwner {
 			Bankrupt = true;
 		} 
 		// Boost in income
-		if (rnd > 0.95 && IncomeBoost == false && Bankrupt == false && incomePercentile <= 0.90)
+		if (rnd > (1 - incomeShockProb) && IncomeBoost == false && Bankrupt == false && incomePercentile <= 0.90)
 		{
 			incomePercentileTrue = incomePercentile;
 			incomePercentile = 0.90; 
@@ -655,6 +668,12 @@ public class Household implements IHouseOwner {
     boolean isFirstTimeBuyer() { return isFirstTimeBuyer; }
 
     public boolean isBankrupt() { return isBankrupt; }
+    
+    // GC:
+    
+    public boolean wasBankrupt() { return wasBankrupt; }
+    
+    // GC: END
 
     public double getBankBalance() { return bankBalance; } // ***
 

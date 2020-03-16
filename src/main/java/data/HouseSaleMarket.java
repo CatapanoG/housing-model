@@ -28,11 +28,15 @@ public class HouseSaleMarket {
     //-------------------//
     //----- Methods -----//
     //-------------------//
-
+	
 	/***
 	 * @return refPrice Array of doubles with the reference price for each quality band
 	 */
-	public static double [] getReferencePricePerQuality() { return refPrice; }
+	public static double [] getReferencePricePerQuality() {
+		
+		return refPrice; 
+		
+	}
 
     /***
      * @return rentalRefPrice Array of doubles with the reference rental price for each quality band
@@ -50,6 +54,7 @@ public class HouseSaleMarket {
 	 * @return Set up initial reference prices for each house quality
      */
 	private static double [] setupRefPrice() {
+		//System.out.println(config.N_QUALITY + " HSM setup");
 		double [] result = new double[config.N_QUALITY];
 		for(int q = 0; q < config.N_QUALITY; ++q) {
 		    // TODO: Why to discount this initial price distribution with INITIAL_HPI (which is < 1)?
@@ -58,6 +63,19 @@ public class HouseSaleMarket {
 		}
 		return result;
 	}
+	
+	// GC: ADD to update the refPrice in calibration exercises
+	public static void updateRefPrice()
+	{
+		//System.out.println(config.N_QUALITY + " HSM update");
+		refPrice = setupRefPrice();
+	}
+	// GC: updates the reference to the config file
+	public static void updateConfigFile(Config file)
+	{
+		config = file;
+	}
+	// GC: END
 	
 /*
  * NOTES ON AGGREGATE CALIBRATION

@@ -48,6 +48,8 @@ public class CreditSupply extends CollectorBase {
         
         //GC:
         dtiBorrowers = 0.0;
+        ltvBorrowers = 0.0;
+        //GC: END
         
         for(MortgageAgreement m : Model.bank.mortgages) {
         	if(m.isBuyToLet) {
@@ -58,7 +60,8 @@ public class CreditSupply extends CollectorBase {
         	
         	// GC:
         	dtiBorrowers += m.dti;
-        	
+        	ltvBorrowers += m.ltv;
+        	// GC: END
         }
         if (oldTotalCredit > 0.0) {
             netCreditGrowth = (totalOOCredit + totalBTLCredit - oldTotalCredit)/oldTotalCredit;
@@ -91,6 +94,7 @@ public class CreditSupply extends CollectorBase {
         ooDSRcounter = 0.0;
         btlDSRcounter = 0.0;
         dtiBorrowers /= Model.bank.mortgages.size();
+        ltvBorrowers /= Model.bank.mortgages.size();
         
 		for (int i = 0; i<config.N_QUALITY; i++)
 		{
@@ -107,7 +111,7 @@ public class CreditSupply extends CollectorBase {
 			mortgageSumPrincipalByQuality[i] = 0.0;
 			mortgageSumInstByQuality[i] = 0.0;
 		}
-        
+        // GC: END
         //System.out.println(dtiBorrowers);
 	}
 
@@ -134,6 +138,7 @@ public class CreditSupply extends CollectorBase {
 					
 					//GC:
 					btlDSRcounter += approval.monthlyPayment/h.getMonthlyGrossEmploymentIncome();
+					//GC: END
 					
 				} else {
 					oo_ltv.addValue(100.0*approval.principal/housePrice);
@@ -141,7 +146,7 @@ public class CreditSupply extends CollectorBase {
 					
 					//GC:
 					ooDSRcounter += approval.monthlyPayment/h.getMonthlyGrossEmploymentIncome();
-					
+					//GC: END
 				}
 				downpayments.addValue(approval.downPayment);
 			}
@@ -151,6 +156,8 @@ public class CreditSupply extends CollectorBase {
 			
 			//GC:
 			approval.dti = ( approval.principal ) / ( h.getAnnualGrossEmploymentIncome() );
+			approval.ltv = ( approval.principal ) / ( housePrice );
+			//GC: END
 			
 			if(approval.principal > 0.0)
 			{
@@ -283,6 +290,7 @@ public class CreditSupply extends CollectorBase {
 	private double ooDSRcounter = 0.0; // Debt service ratio counter
 	private double btlDSRcounter = 0.0; // Debt service ratio counter
 	public double dtiBorrowers = 0.0; // debt to income for borrowers only
+	public double ltvBorrowers = 0.0; // loan to value for borrowers only
 	private double[] mortgageCounterByQuality;
 	private double[] mortgageSumPrincipalByQuality;
 	private double[] mortgageSumInstByQuality;

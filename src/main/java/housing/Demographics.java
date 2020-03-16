@@ -12,12 +12,19 @@ public class Demographics {
 
 	private Config	            config = Model.config; // Passes the Model's configuration parameters object to a private field
 	private MersenneTwister     prng;
+	
+	// GC:
+	private double              incomeShockProb;
+	// GC: END
 
     //------------------------//
     //----- Constructors -----//
     //------------------------//
 
-	public Demographics(MersenneTwister prng) { this.prng = prng; }
+	public Demographics(MersenneTwister prng, double _incomeShockProb) { 
+		this.prng = prng; 
+		this.incomeShockProb = _incomeShockProb;
+	}
 
     //-------------------//
     //----- Methods -----//
@@ -27,12 +34,13 @@ public class Demographics {
      * Adds newly "born" households to the model and removes households that "die".
      */
 	public void step() {
+		
         // Birth: Add new households at a rate compatible with the age at birth distribution, the probability of
         // death dependent on age, and the target population
         int nBirths = (int) (config.TARGET_POPULATION * data.Demographics.getBirthRate() + prng.nextDouble());
         // Finally, add the households, with random ages drawn from the corresponding distribution
         while (nBirths-- > 0) {
-            Model.households.add(new Household(prng));
+            Model.households.add(new Household(prng, incomeShockProb));
         }
         // Death: Kill households with a probability dependent on their age and organise inheritance
         double pDeath;
@@ -46,5 +54,6 @@ public class Demographics {
                 h.transferAllWealthTo(Model.households.get(prng.nextInt(Model.households.size())));
             }
         }
+        
 	}
 }
