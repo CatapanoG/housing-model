@@ -333,6 +333,8 @@ public class Model {
     		double consumption_fraction,
     		double income_shock_prob) {
         // the model has about 70 parameters
+		
+		long startTime = System.currentTimeMillis();
 
     	System.out.println("W l'Italia");
     	
@@ -418,21 +420,34 @@ public class Model {
             	
             	// *******************************
             	// *******************************
-            	// PPP policy
+            	// PPP policy START
             	// *******************************
             	// *******************************
             	// Policy experiments - last 50yrs
             	if (t == (config.N_STEPS - 12*25))
             	{	
             		//LTV EXPERIMENT
-            		bank.setAllLTV(0.8, 0.8, 0.8);
+            		//bank.setAllLTV(0.8, 0.8, 0.8);
             		
             		//CREDIT SUPPLY EXPERIMENT
             		//config.BANK_CREDIT_SUPPLY_TARGET = 300;
             		
             		//Debt service max policy experiment
             		//config.CENTRAL_BANK_AFFORDABILITY_COEFF = 0.30;
+            		
+            		//COVID EXPERIMENT
+            		data.EmploymentIncome.permanently_shock_incomeAge(1-0.117f);
+            		for(Household h : households) h.shock_bankBalance(1-0.032f);
             	}
+            	if (t == (config.N_STEPS - 1))
+            	{
+            		data.EmploymentIncome.permanently_shock_incomeAge(1/(1-0.117f));
+            	}
+            	// *******************************
+            	// *******************************
+            	// PPP policy END
+            	// *******************************
+            	// *******************************
 
                 // Steps model and stores sale and rental markets bid and offer prices, and their averages, into their
                 // respective variables
@@ -672,6 +687,10 @@ public class Model {
     		// nothing
     		results2 = new byte[1];
     	}
+    	
+    	long endTime = System.currentTimeMillis();
+		long time = (endTime - startTime)/(long)1000.0;
+        System.out.println("Total execution time: " + time + "secs."); 
 
     	return results2;
     	

@@ -212,4 +212,18 @@ public class EmploymentIncome {
         }
         return income;
     }
+    
+    // GC: start
+    static public void permanently_shock_incomeAge(float shock_size)
+    {
+		for (int i = 0; i < incomeAge.length; i++)
+		{
+			incomeAge[i][2] *= shock_size;
+			incomeAge[i][3] *= shock_size;
+		}
+    
+    	return;
+    }
+    // GC: end
+    
 }

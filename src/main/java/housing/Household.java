@@ -722,4 +722,15 @@ public class Household implements IHouseOwner {
         }
         return(0.0);        
     }
+    
+    // GC: start
+    
+    public void shock_bankBalance(float shock_size)
+    {
+    	bankBalance *= shock_size;
+    	
+    	return;
+    }
+    
+    // GC: end
 }
